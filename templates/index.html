@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>極速台灣發票 AI 辨識系統 (本地輕量版)</title>
+    <style>
+        body { font-family: 'Microsoft JhengHei', sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background-color: #f5f7f9; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h2 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+        .upload-box { border: 2px dashed #3498db; padding: 30px; text-align: center; border-radius: 8px; cursor: pointer; background: #fcfdfe; }
+        button { width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; margin-top: 15px; }
+        button:hover { background: #2980b9; }
+        #result { margin-top: 25px; padding: 15px; border-radius: 6px; display: none; background: #f8f9fa; border-left: 5px solid #2ecc71; }
+        pre { white-space: pre-wrap; word-wrap: break-word; font-size: 14px; color: #333; }
+        .loading { display: none; text-align: center; color: #7f8c8d; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🧾 台灣發票 AI 智慧辨識</h2>
+    <form id="uploadForm">
+        <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+            <p>點擊此處選擇或拖曳發票照片</p>
+            <p style="font-size: 12px; color: #95a5a6;">支援 電子發票 QR Code / 長條發票 / 熱感應紙</p>
+            <input type="file" id="fileInput" name="file" accept="image/*" style="display: none;" onchange="updateFileName(this)">
+            <div id="fileName" style="margin-top: 10px; font-weight: bold; color: #3498db;"></div>
+        </div>
+        <button type="submit">開始精準辨識</button>
+    </form>
+
+    <div class="loading" id="loadingTag">⚡ AI 正在最佳化影像並解析結構，請稍候...</div>
+
+    <div id="result">
+        <h3 style="margin-top:0; color: #27ae60;">📊 結構化辨識結果</h3>
+        <pre id="jsonOutput"></pre>
+    </div>
+</div>
+
+<script>
+function updateFileName(input) {
+    const fileName = input.files[0] ? input.files[0].name : '';
+    document.getElementById('fileName').innerText = fileName ? `已選擇: ${fileName}` : '';
+}
+
+document.getElementById('uploadForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const fileInput = document.getElementById('fileInput');
+    if (!fileInput.files[0]) {
+        alert('請先選擇發票圖片！');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    document.getElementById('loadingTag').style.display = 'block';
+    document.getElementById('result').style.display = 'none';
+
+    try {
+        const response = await fetch('/', { method: 'POST', body: formData });
+        const data = await response.json();
+        
+        document.getElementById('jsonOutput').innerText = JSON.stringify(data, null, 4);
+        document.getElementById('result').style.display = 'block';
+    } catch (error) {
+        alert('辨識失敗，請檢查網路或確認圖片是否過大。');
+    } finally {
+        document.getElementById('loadingTag').style.display = 'none';
+    }
+};
+</script>
+
+</body>
+</html>
