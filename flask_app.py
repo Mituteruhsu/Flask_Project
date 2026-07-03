@@ -4,7 +4,7 @@ import re
 import sqlite3
 from datetime import datetime
 from flask import Flask, request, render_template, jsonify
-from rapidocr_onnxruntime import RapidOCR
+from rapidocr import RapidOCR
 
 app = Flask(__name__)
 # 使用項目目錄下的 uploads 資料夾（解決 Windows /tmp 路徑問題）
