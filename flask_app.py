@@ -14,7 +14,24 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # 確保資料夾存在
 DB_PATH = os.path.join(PROJECT_DIR, 'invoices.db')
 
 # 初始化超輕量 OCR 引擎
-engine = RapidOCR()
+# 1. 自動取得目前程式所在的路徑，並指定本地端模型路徑
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DET_MODEL = os.path.join(BASE_DIR, 'models', 'ch_PP-OCRv4_det_infer.onnx')
+REC_MODEL = os.path.join(BASE_DIR, 'models', 'ch_PP-OCRv4_rec_infer.onnx')
+print("--- 正在初始化 RapidOCR 引擎 ---")
+print(f"定位模型路徑: {DET_MODEL}")
+print(f"辨識模型路徑: {REC_MODEL}")
+# 2. 強制載入本地端模型，避免任何網路下載行為
+try:
+    engine = RapidOCR(
+        params={"Det.model_path":DET_MODEL,
+                "Rec.model_path":REC_MODEL,
+                }
+                )
+    print("✅ RapidOCR 引擎初始化成功！\n")
+except Exception as e:
+    print(f"❌ 引擎初始化失敗，錯誤原因: {e}")
+    exit()
 
 def init_db():
     """ 初始化 SQLite 資料庫：如果檔案不存在會自動建立，並建立繁體中文欄位表 """
