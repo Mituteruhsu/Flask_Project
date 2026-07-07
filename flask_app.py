@@ -88,8 +88,7 @@ def preprocess_image(image_path):
     return output_path
 
 def parse_taiwan_qrcode(uploaded_image):
-    print(f"test the parse_taiwan_qrcode \n{uploaded_image}")
-
+    # print(f"test the parse_taiwan_qrcode \n{uploaded_image}")
     # 使用 pyzbar 進行解碼
     barcodes = decode(uploaded_image)
 
@@ -102,17 +101,44 @@ def parse_taiwan_qrcode(uploaded_image):
         
         print(f"型態: {barcode_type}, 內容: {barcode_data}")
 
-    detector = cv2.QRCodeDetector()
-    print(f"detector cv2 QRCodeDetector:\n{detector}")
-    retval, decoded_info, _, _ = detector.detectAndDecodeMulti(uploaded_image)
-    print(f"Decotor retval:\n{retval}\ndecoded_info:\n{decoded_info}\n")
-    if retval:
-        for text in decoded_info:
-            if text and re.match(r'^[A-Z]{2}\d{8}', text):
-                # 假設金額在特定欄位，此處做安全格式化
-                invoice_num = f"{text[0:2]}-{text[2:10]}"
+    raw_qrs = []
+
+    def decode_bytes(data: bytes) -> str:
+        # 若 pyzbar 回傳的是已解碼字串，嘗試以 latin1 還原原始 bytes 再解碼
+        if isinstance(data, str):
+            try:
+                return decode_bytes(data.encode("latin1"))
+            except Exception:
+                return data.strip()
+        # 嘗試多種常見編碼，避免出現亂碼
+        for enc in ("utf-8", "utf-8-sig", "big5hkscs", "big5", "cp950", "gb18030", "shift_jis", "latin1"):
+            try:
+                text = data.decode(enc).strip()
+                if text:
+                    return text
+            except Exception:
+                continue
+        return data.decode("utf-8", errors="replace").strip()
+    
+    for obj in barcodes:
+        try:
+            data = decode_bytes(obj.data)
+            # 過濾太短的資料
+            if len(data) >= 8:
+                raw_qrs.append(data)
+        except Exception:
+            continue
+    print(f"services/qr_service.py QRService.decode() - decoded {len(raw_qrs)} QR codes")
+    print(f"decoded QR codes: {raw_qrs}")
+
+
+    # if barcode_data:
+    #     for text in decoded_info:
+    #         if text and re.match(r'^[A-Z]{2}\d{8}', text):
+    #             # 假設金額在特定欄位，此處做安全格式化
+    #             invoice_num = f"{text[0:2]}-{text[2:10]}"
                 
-                return {"發票號碼": invoice_num, "推算總金額": "NT$ 來自條碼", "辨識方法": "QR Code"}
+    #             return {"發票號碼": invoice_num, "推算總金額": "NT$ 來自條碼", "辨識方法": "QR Code"}
     return None
 
 def advanced_invoice_corrector(ocr_results):
