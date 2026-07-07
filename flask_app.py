@@ -2,9 +2,11 @@ import os
 import cv2
 import re
 import sqlite3
+import numpy as np
 from datetime import datetime
 from flask import Flask, request, render_template, jsonify
 from rapidocr import RapidOCR
+from pyzbar.pyzbar import decode
 
 app = Flask(__name__)
 # 使用項目目錄下的 uploads 資料夾（解決 Windows /tmp 路徑問題）
@@ -85,15 +87,31 @@ def preprocess_image(image_path):
     cv2.imwrite(output_path, binary_img)
     return output_path
 
-def parse_taiwan_qrcode(image_path):
-    img = cv2.imread(image_path)
+def parse_taiwan_qrcode(uploaded_image):
+    print(f"test the parse_taiwan_qrcode \n{uploaded_image}")
+
+    # 使用 pyzbar 進行解碼
+    barcodes = decode(uploaded_image)
+
+    # 3. 讀取解碼結果
+    for barcode in barcodes:
+        # 條碼的內容 (型態為 bytes，需以 utf-8 解碼成字串)
+        barcode_data = barcode.data.decode("utf-8")
+        # 條碼的類型 (例如: 'QRCODE', 'CODE128')
+        barcode_type = barcode.type
+        
+        print(f"型態: {barcode_type}, 內容: {barcode_data}")
+
     detector = cv2.QRCodeDetector()
-    retval, decoded_info, _, _ = detector.detectAndDecodeMulti(img)
+    print(f"detector cv2 QRCodeDetector:\n{detector}")
+    retval, decoded_info, _, _ = detector.detectAndDecodeMulti(uploaded_image)
+    print(f"Decotor retval:\n{retval}\ndecoded_info:\n{decoded_info}\n")
     if retval:
         for text in decoded_info:
             if text and re.match(r'^[A-Z]{2}\d{8}', text):
                 # 假設金額在特定欄位，此處做安全格式化
                 invoice_num = f"{text[0:2]}-{text[2:10]}"
+                
                 return {"發票號碼": invoice_num, "推算總金額": "NT$ 來自條碼", "辨識方法": "QR Code"}
     return None
 
@@ -111,23 +129,30 @@ def advanced_invoice_corrector(ocr_results):
 # ===== ↑↑↑↑↑ image 的預處理與辨識演算法 ↑↑↑↑↑ =====
 
 # ===== ↓↓↓↓↓ 前端路由 與 API 串接 ↓↓↓↓↓ =====
-
 @app.route('/', methods=['GET', 'POST'])
 def upload_invoice():
     if request.method == 'POST':
         file = request.files.get('file')
         if not file or file.filename == '':
             return jsonify({"error": "未選擇圖片"})
-            
-        raw_path = os.path.join(UPLOAD_FOLDER, file.filename)
-        file.save(raw_path)
+        
+        # 4. 支援中文路徑的安全讀取機制
+        try:
+            img = cv2.imdecode(np.fromfile(file, dtype=np.uint8), cv2.IMREAD_COLOR)
+            if img is None:
+                print(f"❌ 圖片讀取失敗！")
+                exit()
+            print(f"✅ 圖片讀取成功！尺寸為: {img.shape[1]}x{img.shape[0]}\n")
+        except Exception as e:
+            print(f"❌ 讀取圖片時發生異常: {e}")
+            exit()
         
         # 1. 嘗試 QR Code 辨識
-        final_data = parse_taiwan_qrcode(raw_path)
+        final_data = parse_taiwan_qrcode(img)
         
         # 2. 若失敗，啟動 AI-OCR 辨識
         if not final_data:
-            processed_path = preprocess_image(raw_path)
+            processed_path = preprocess_image(img)
             if processed_path:
                 ocr_result, _ = engine(processed_path)
                 final_data = advanced_invoice_corrector(ocr_result)
