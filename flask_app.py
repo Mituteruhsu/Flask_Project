@@ -33,6 +33,7 @@ except Exception as e:
     print(f"❌ 引擎初始化失敗，錯誤原因: {e}")
     exit()
 
+# ===== ↓↓↓↓↓ Database ↓↓↓↓↓ =====
 def init_db():
     """ 初始化 SQLite 資料庫：如果檔案不存在會自動建立，並建立繁體中文欄位表 """
     conn = sqlite3.connect(DB_PATH)
@@ -70,9 +71,9 @@ def save_to_database(invoice_num, total_amount, method):
     except Exception as e:
         print(f"資料庫寫入失敗: {e}")
         return False
+# ===== ↑↑↑↑↑ Database ↑↑↑↑↑ =====
 
-# --- 以下保留原本的預處理與辨識演算法 (簡化示意，邏輯不變) ---
-
+# ===== ↓↓↓↓↓ image 的預處理與辨識演算法 ↓↓↓↓↓ =====
 def preprocess_image(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     if img is None: return None
@@ -107,8 +108,9 @@ def advanced_invoice_corrector(ocr_results):
     total_amount = f"NT$ {max(all_numbers)}" if all_numbers else "未偵測到"
     
     return {"發票號碼": invoice_number, "推算總金額": total_amount, "辨識方法": "AI-OCR"}
+# ===== ↑↑↑↑↑ image 的預處理與辨識演算法 ↑↑↑↑↑ =====
 
-# --- 路由與 API 串接 ---
+# ===== ↓↓↓↓↓ 前端路由 與 API 串接 ↓↓↓↓↓ =====
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_invoice():
@@ -164,6 +166,7 @@ def get_history():
             "記錄時間": row["created_at"]
         })
     return jsonify(history_list)
+# ===== ↑↑↑↑↑ 前端路由 與 API 串接 ↑↑↑↑↑ =====
 
 if __name__ == '__main__':
     app.run(debug=True)
