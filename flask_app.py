@@ -234,11 +234,25 @@ def parse_taiwan_qrcode(uploaded_image):
             item_quantity,
             items_price
             )
+    def find_main_qr(raw_qrs):
+        """
+        從多個 QR Code 中找出電子發票主資料 QR
 
-    info=reInfo(raw_qrs[0])
+        判斷條件：
+        - 長度 >= 77
+        - 包含電子發票格式
+        """
+        for qr in raw_qrs:
+            if len(qr) >= 77 and re.search(r'^[A-Z]{2}\d{8}\d{4}', qr):
+                return qr
+        print("❌ 未偵測到符合電子發票格式的 QR Code")
+        return None
+    
+    info=reInfo(find_main_qr(raw_qrs))
     if info:
-        invoice_num = info.recieve                
-        return {"發票號碼": invoice_num, "推算總金額": "NT$ 來自條碼", "辨識方法": "QR Code"}
+        invoice_num = info.recieve
+        recive_total_sale = info.recieve_total_sale
+        return {"發票號碼": invoice_num, "推算總金額": "NT$" + recive_total_sale, "辨識方法": "QR Code"}
     return None
 
 def advanced_invoice_corrector(ocr_results):
