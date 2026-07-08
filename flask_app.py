@@ -100,35 +100,22 @@ def parse_taiwan_qrcode(uploaded_image):
     # 3. 讀取解碼結果
     for barcode in barcodes:
         # 條碼的內容 (型態為 bytes，需以 utf-8 解碼成字串)
-        barcode_data = barcode.data.decode("utf-8")
+        barcode_data = barcode.data
         # 條碼的類型 (例如: 'QRCODE', 'CODE128')
         barcode_type = barcode.type
-        
-        print(f"型態: {barcode_type}, 內容: {barcode_data}")
+        barcode_rect = barcode.rect
+        barcode_polygon = barcode.polygon
+        barcode_points = [(point.x, point.y) for point in barcode_polygon]
+        barcode_orientation = barcode.orientation
+        barcode_quality = barcode.quality
 
-    raw_qrs = []
+        print(f"型態: {barcode_type}\n內容: {barcode_data}\n頂點座標: {barcode_points}\n矩形座標: {barcode_rect}\n方向: {barcode_orientation}\n品質: {barcode_quality}")
 
-    def decode_bytes(data: bytes) -> str:
-        # 若 pyzbar 回傳的是已解碼字串，嘗試以 latin1 還原原始 bytes 再解碼
-        if isinstance(data, str):
-            try:
-                return decode_bytes(data.encode("latin1"))
-            except Exception:
-                return data.strip()
-        # 嘗試多種常見編碼，避免出現亂碼
-        for enc in ("utf-8", "utf-8-sig", "big5hkscs", "big5", "cp950", "gb18030", "shift_jis", "latin1"):
-            try:
-                text = data.decode(enc).strip()
-                if text:
-                    return text
-            except Exception:
-                continue
-        return data.decode("utf-8", errors="replace").strip()
-    
+    raw_qrs = []    
     for obj in barcodes:
         try:
-            data = decode_bytes(obj.data)
-            # 過濾太短的資料
+            data = obj.data.decode('utf-8')  # 嘗試以 UTF-8 解碼
+            # 過濾掉太短的資料
             if len(data) >= 8:
                 raw_qrs.append(data)
         except Exception:
