@@ -6,8 +6,8 @@ import numpy as np
 from datetime import datetime
 from flask import Flask, request, render_template, jsonify
 from rapidocr import RapidOCR
-from pyzbar.pyzbar import decode
 from qr_service import QRService
+from db_service import DB_Service
 
 
 # ===========================
@@ -46,43 +46,8 @@ except Exception as e:
 # ========================
 #       Database
 # ========================
-def init_db():
-    """ 初始化 SQLite 資料庫：如果檔案不存在會自動建立，並建立繁體中文欄位表 """
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS invoice_records (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            invoice_num TEXT NOT NULL,
-            total_amount TEXT,
-            method TEXT,
-            created_at TEXT
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
 # 程式啟動時，立即初始化或檢查資料庫
-init_db()
-
-def save_to_database(invoice_num, total_amount, method):
-    """ 將辨識成功的發票資料，安全地寫入 SQLite 資料庫 """
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        cursor.execute('''
-            INSERT INTO invoice_records (invoice_num, total_amount, method, created_at)
-            VALUES (?, ?, ?, ?)
-        ''', (invoice_num, total_amount, method, current_time))
-        
-        conn.commit()
-        conn.close()
-        return True
-    except Exception as e:
-        print(f"資料庫寫入失敗: {e}")
-        return False
+DB_Service(DB_PATH)
 # ===== ↑↑↑↑↑ Database ↑↑↑↑↑ =====
 
 # =======================================
@@ -98,8 +63,6 @@ def preprocess_image(image_path):
     output_path = os.path.join(UPLOAD_FOLDER, 'preprocessed.png')
     cv2.imwrite(output_path, binary_img)
     return output_path
-
-
 
 def advanced_invoice_corrector(ocr_results):
     if not ocr_results: return {"發票號碼": "未偵測到", "推算總金額": "未偵測到", "辨識方法": "AI-OCR"}
@@ -148,7 +111,7 @@ def upload_invoice():
                 return jsonify({"error": "圖片損壞"})
 
         # 【核心新增】將辨識出的結果，即時寫入 SQLite 資料庫中記錄
-        save_to_database(
+        DB_Service(DB_PATH).save_to_database(
             invoice_num=final_data["發票號碼"],
             total_amount=final_data["推算總金額"],
             method=final_data["辨識方法"]
