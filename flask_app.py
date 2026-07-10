@@ -1,12 +1,11 @@
 import os
 import cv2
-import re
 import sqlite3
 import numpy as np
-from datetime import datetime
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, flash, redirect, url_for
 from rapidocr import RapidOCR
 from qr_service import QRService
+from ocr_service import OCRService
 from db_service import DB_Service
 
 
@@ -19,29 +18,7 @@ PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(PROJECT_DIR, 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # 確保資料夾存在
 DB_PATH = os.path.join(PROJECT_DIR, 'invoices.db')
-
-# ===============================
-#      初始化 RapidOCR Engine
-# ===============================
-# 1. 取得目前程式所在的路徑，並指定本地端模型路徑
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DET_MODEL = os.path.join(BASE_DIR, 'models', 'ch_PP-OCRv4_det_infer.onnx')
-REC_MODEL = os.path.join(BASE_DIR, 'models', 'ch_PP-OCRv4_rec_infer.onnx')
-print("--- 正在初始化 RapidOCR 引擎 ---")
-print(f"定位模型路徑: {DET_MODEL}")
-print(f"辨識模型路徑: {REC_MODEL}")
-
-# 2. 強制載入本地端模型，避免網路下載
-try:
-    engine = RapidOCR(
-        params={"Det.model_path":DET_MODEL,
-                "Rec.model_path":REC_MODEL,
-                }
-                )
-    print("✅ RapidOCR 引擎初始化成功！\n")
-except Exception as e:
-    print(f"❌ 引擎初始化失敗，錯誤原因: {e}")
-    exit()
+# ===== ↑↑↑↑↑ Flask App ↑↑↑↑↑ =====
 
 # ========================
 #       Database
@@ -63,18 +40,6 @@ def preprocess_image(image_path):
     output_path = os.path.join(UPLOAD_FOLDER, 'preprocessed.png')
     cv2.imwrite(output_path, binary_img)
     return output_path
-
-def advanced_invoice_corrector(ocr_results):
-    if not ocr_results: return {"發票號碼": "未偵測到", "推算總金額": "未偵測到", "辨識方法": "AI-OCR"}
-    full_text = "".join([t[1].upper().replace('O', '0').replace('I', '1') for t in ocr_results])
-    num_match = re.search(r'([A-Z]{2})[- ]?(\d{8})', full_text)
-    invoice_number = f"{num_match.group(1)}-{num_match.group(2)}" if num_match else "未偵測到"
-    
-    # 簡單模擬金額抓取
-    all_numbers = [int(s) for s in re.findall(r'\d+', full_text) if 1 <= len(s) <= 5]
-    total_amount = f"NT$ {max(all_numbers)}" if all_numbers else "未偵測到"
-    
-    return {"發票號碼": invoice_number, "推算總金額": total_amount, "辨識方法": "AI-OCR"}
 # ===== ↑↑↑↑↑ Image 預處理與辨識演算法 ↑↑↑↑↑ =====
 
 # ===========================================
@@ -87,7 +52,6 @@ def upload_invoice():
         if not file or file.filename == '':
             return jsonify({"error": "未選擇圖片"})
         
-        # 4. 支援中文路徑的安全讀取機制
         try:
             img = cv2.imdecode(np.fromfile(file, dtype=np.uint8), cv2.IMREAD_COLOR)
             if img is None:
@@ -104,13 +68,15 @@ def upload_invoice():
         # 2. 若失敗，啟動 AI-OCR 辨識
         if not final_data:
             processed_path = preprocess_image(img)
+            # 使用單例模式取得 RapidOCR 引擎，避免每次辨識都重新初始化
+            ocr_engine = OCRService.get_engine()
             if processed_path:
-                ocr_result, _ = engine(processed_path)
-                final_data = advanced_invoice_corrector(ocr_result)
+                ocr_result, _ = ocr_engine(processed_path)
+                final_data = OCRService.advanced_invoice_corrector(ocr_result)
             else:
                 return jsonify({"error": "圖片損壞"})
 
-        # 【核心新增】將辨識出的結果，即時寫入 SQLite 資料庫中記錄
+        # 將辨識出的結果，即時寫入 SQLite 資料庫中記錄
         DB_Service(DB_PATH).save_to_database(
             invoice_num=final_data["發票號碼"],
             total_amount=final_data["推算總金額"],
@@ -120,6 +86,23 @@ def upload_invoice():
         return jsonify(final_data)
         
     return render_template('index.html')
+
+@app.route('/base', methods=['GET'])
+def base_view():            
+    return render_template('base.html')
+
+@app.route('/upload', methods=['GET'])
+def upload_view():
+    return render_template('upload.html')
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if not request.file:
+        flash('檔案上傳失敗！', 'danger') # 直接傳 danger，前端不用再做 if/else 判斷
+        return redirect(url_for('upload_view'))
+    
+    flash('發票辨識成功！', 'success') # 直接傳 success
+    return redirect(url_for('upload_view'))
 
 # 新增一個 API，讓前端隨時可以查閱歷史發票紀錄
 @app.route('/history', methods=['GET'])
@@ -145,4 +128,7 @@ def get_history():
 # ===== ↑↑↑↑↑ 前端路由 與 API 串接 ↑↑↑↑↑ =====
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # app.run(debug=True)
+    # host='0.0.0.0' 代表監聽所有網路介面
+    # port=8000 可以自訂埠號（預設是 5000）
+    app.run(host='0.0.0.0', port=8000, debug=True)
