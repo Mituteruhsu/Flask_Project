@@ -1,7 +1,6 @@
 import re
 from pyzbar.pyzbar import decode
 from model_recieve import QRCodeInfo
-from image_service import ImageService
 
 class QRService:
     @staticmethod
@@ -10,7 +9,7 @@ class QRService:
         # 使用 pyzbar 進行解碼
         barcodes = decode(img)
 
-        # 3. 讀取解碼結果
+        # 測試用讀取解碼結果
         for barcode in barcodes:
             # 條碼的內容 (型態為 bytes，需以 utf-8 解碼成字串)
             barcode_data = barcode.data
@@ -33,8 +32,8 @@ class QRService:
                     raw_qrs.append(data)
             except Exception:
                 continue
-        print(f"services/qr_service.py QRService.decode() - decoded {len(raw_qrs)} QR codes")
-        print(f"decoded QR codes: {raw_qrs}")
+        print(f"services/qr_service.py QRService.decode() - 解出 {len(raw_qrs)} QR codes")
+        print(f"decoded QR codes:\n{raw_qrs}")
         
         def recode(x):      # 判別 0 , 1 , 2 是否為 Big5, UTF-8, Base64
             print("-----From barcode.data.decode('utf-8')----- \n", x)
@@ -56,8 +55,8 @@ class QRService:
             elif y == 2:
                 print('undefinde decode: base64') 
 
-        def reInfo(x):
-            x=recode(x) # 判別0,1,2 是否為utf-8, base64, big5
+        def reInfo(main_qr):
+            x=recode(main_qr) # 判別0,1,2 是否為utf-8, base64, big5
             recieve = x[:10]
             recieve_date = x[10:17]
             recieve_randam = x[17:21]
@@ -77,9 +76,9 @@ class QRService:
             recieve_Item = z[1]
             recieve_totle_Item = z[2]
             codetype = z[3]
-            if codetype == '0': codetype = '0:Big5'
-            elif codetype == '1': codetype = '1:UTF-8'
-            elif codetype =='2': codetype = '2:Base64'
+            if codetype == '0': codetype = 'Big5'
+            elif codetype == '1': codetype = 'UTF-8'
+            elif codetype =='2': codetype = 'Base64'
 
             # print("發票字軌(10位)    : " + self.recieve)
             # print("發票開立日期 (7位): " + self.recieve_date)
@@ -129,7 +128,7 @@ class QRService:
             """
             for qr in raw_qrs:
                 if len(qr) >= 77 and re.match(r'^[A-Z]{2}\d{8}', qr):
-                    return qr
+                    return qr.rstrip()  # 去除可能的換行符號
             print("❌ 未偵測到符合電子發票格式的 QR Code")
             return None
         
@@ -140,7 +139,24 @@ class QRService:
         
         info=reInfo(main_qr)
         if info:
-            invoice_num = info.recieve
-            recive_total_sale = info.recieve_total_sale
-            return {"發票號碼": invoice_num, "推算總金額": "NT$" + recive_total_sale, "辨識方法": "QR Code"}
+            # 將 QRCodeInfo 物件的屬性，轉換成「前端直接可以拿來跑迴圈」的中文欄位字典
+            return {"發票號碼": info.recieve,
+                    "開立日期": info.recieve_date,
+                    "隨機碼": info.recieve_randam,
+                    "銷售額": info.recieve_sale,
+                    "推算總金額": info.recieve_total_sale,
+                    "買方統編": info.recieve_buyer_invoice_num,
+                    "賣方統編": info.recieve_seller_invoice_num,
+                    "編碼類型": info.codetype,
+                    "AES加密": info.recieve_AESencode,
+                    "77個字元後的資料": info.after77,
+                    "營業人使用區": info.recieve_free_usage,
+                    "品項筆數": info.recieve_Item,
+                    "品項總筆數": info.recieve_totle_Item,
+                    "編碼類型": info.codetype,
+                    "品項明細": info.items,
+                    "品項數量": info.item_quantity,
+                    "品項單價": info.items_price,
+                    "辨識方法": "QR Code",
+                    }
         return None

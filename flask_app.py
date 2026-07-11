@@ -1,9 +1,6 @@
 import os
-import cv2
 import sqlite3
-import numpy as np
 from flask import Flask, request, render_template, jsonify, flash, redirect, url_for
-from rapidocr import RapidOCR
 from image_service import ImageService
 from qr_service import QRService
 from ocr_service import OCRService
@@ -14,6 +11,9 @@ from db_service import DB_Service
 #       Flask App
 # ===========================
 app = Flask(__name__)
+
+# 設定 Jsonify 不要自動排序 key，保持原本的順序
+app.json.sort_keys = False  
 # 使用項目目錄下的 uploads 資料夾（解決 Windows /tmp 路徑問題）
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(PROJECT_DIR, 'uploads')
