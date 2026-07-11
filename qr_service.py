@@ -9,24 +9,25 @@ class QRService:
         # 使用 pyzbar 進行解碼
         barcodes = decode(img)
 
-        # 測試用讀取解碼結果
-        for barcode in barcodes:
-            # 條碼的內容 (型態為 bytes，需以 utf-8 解碼成字串)
-            barcode_data = barcode.data
-            # 條碼的類型 (例如: 'QRCODE', 'CODE128')
-            barcode_type = barcode.type
-            barcode_rect = barcode.rect
-            barcode_polygon = barcode.polygon
-            barcode_points = [(point.x, point.y) for point in barcode_polygon]
-            barcode_orientation = barcode.orientation
-            barcode_quality = barcode.quality
+        # # -- 測試用讀取解碼結果 --
+        # for barcode in barcodes:
+        #     # 條碼的內容 (型態為 bytes，需以 utf-8 解碼成字串)
+        #     barcode_data = barcode.data.rstrip()
+        #     # 條碼的類型 (例如: 'QRCODE', 'CODE128')
+        #     barcode_type = barcode.type
+        #     barcode_rect = barcode.rect
+        #     barcode_polygon = barcode.polygon
+        #     barcode_points = [(point.x, point.y) for point in barcode_polygon]
+        #     barcode_orientation = barcode.orientation
+        #     barcode_quality = barcode.quality
 
-            print(f"型態: {barcode_type}\n內容: {barcode_data}\n頂點座標: {barcode_points}\n矩形座標: {barcode_rect}\n方向: {barcode_orientation}\n品質: {barcode_quality}")
+        #     print(f"型態: {barcode_type}\n內容: {barcode_data}\n頂點座標: {barcode_points}\n矩形座標: {barcode_rect}\n方向: {barcode_orientation}\n品質: {barcode_quality}")
 
+        # 先使用 UTF-8 嘗試解碼所有 QR Code，並過濾掉太短的資料
         raw_qrs = []    
         for obj in barcodes:
             try:
-                data = obj.data.decode('utf-8')  # 嘗試以 UTF-8 解碼
+                data = obj.data.decode('utf-8').rstrip()  # 嘗試以 UTF-8 解碼
                 # 過濾掉太短的資料
                 if len(data) >= 8:
                     raw_qrs.append(data)
@@ -35,6 +36,22 @@ class QRService:
         print(f"services/qr_service.py QRService.decode() - 解出 {len(raw_qrs)} QR codes")
         print(f"decoded QR codes:\n{raw_qrs}")
         
+        # 過濾出符合電子發票格式的 QR Code
+        def find_main_qr(raw_qrs):
+            """
+            從多個 QR Code 中找出電子發票主資料 QR
+
+            判斷條件：
+            - 長度 >= 77
+            - 包含電子發票格式
+            """
+            for qr in raw_qrs:
+                if len(qr) >= 77 and re.match(r'^[A-Z]{2}\d{8}', qr):
+                    return qr.rstrip()  # 去除可能的換行符號
+            print("❌ 未偵測到符合電子發票格式的 QR Code")
+            return None
+        
+        # 判斷 QR Code 的編碼方式，並進行相應的解碼
         def recode(x):      # 判別 0 , 1 , 2 是否為 Big5, UTF-8, Base64
             print("-----From barcode.data.decode('utf-8')----- \n", x)
             y= list(filter(None, re.search("[0-9]{1}:[0-9]{1}:[0-9]{1}:", x, flags=0).group(0).split(':'))) # 正則表達找出與關鍵類似的字元
@@ -55,6 +72,7 @@ class QRService:
             elif y == 2:
                 print('undefinde decode: base64') 
 
+        # 將 QR Code 的資料解析成 QRCodeInfo 物件，並轉換成前端可用的字典格式
         def reInfo(main_qr):
             x=recode(main_qr) # 判別0,1,2 是否為utf-8, base64, big5
             recieve = x[:10]
@@ -118,19 +136,7 @@ class QRService:
                 item_quantity,
                 items_price
                 )
-        def find_main_qr(raw_qrs):
-            """
-            從多個 QR Code 中找出電子發票主資料 QR
-
-            判斷條件：
-            - 長度 >= 77
-            - 包含電子發票格式
-            """
-            for qr in raw_qrs:
-                if len(qr) >= 77 and re.match(r'^[A-Z]{2}\d{8}', qr):
-                    return qr.rstrip()  # 去除可能的換行符號
-            print("❌ 未偵測到符合電子發票格式的 QR Code")
-            return None
+        
         
         # 避免 find_main_qr() 回傳 None 時，直接導致 reInfo() 報錯 
         main_qr = find_main_qr(raw_qrs)
@@ -147,7 +153,6 @@ class QRService:
                     "推算總金額": info.recieve_total_sale,
                     "買方統編": info.recieve_buyer_invoice_num,
                     "賣方統編": info.recieve_seller_invoice_num,
-                    "編碼類型": info.codetype,
                     "AES加密": info.recieve_AESencode,
                     "77個字元後的資料": info.after77,
                     "營業人使用區": info.recieve_free_usage,

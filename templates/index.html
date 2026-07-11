@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>極速台灣發票 AI 辨識系統 (本地輕量版)</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>台灣發票 AI 辨識系統 (本地輕量版)</title>
     <style>
         body { font-family: 'Microsoft JhengHei', sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background-color: #f5f7f9; }
         .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -35,41 +36,82 @@
     <div id="result">
         <h3 style="margin-top:0; color: #27ae60;">📊 結構化辨識結果</h3>
         <pre id="jsonOutput"></pre>
+        <!-- Key-Value 對照表格 -->
+        <table class="kv-table" id="kvTable">
+            <thead>
+                <tr>
+                    <th>欄位名稱</th>
+                    <th>內容</th>
+                </tr>
+            </thead>
+            <tbody id="kvBody"></tbody>
+        </table>
     </div>
 </div>
 
 <script>
-function updateFileName(input) {
-    const fileName = input.files[0] ? input.files[0].name : '';
-    document.getElementById('fileName').innerText = fileName ? `已選擇: ${fileName}` : '';
-}
-
-document.getElementById('uploadForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const fileInput = document.getElementById('fileInput');
-    if (!fileInput.files[0]) {
-        alert('請先選擇發票圖片！');
-        return;
+    var csrfToken = '{{ csrf_token() }}';  // 從後端模板中獲取 CSRF token
+    function updateFileName(input) {
+        const fileName = input.files[0] ? input.files[0].name : '';
+        document.getElementById('fileName').innerText = fileName ? `已選擇: ${fileName}` : '';
     }
 
-    const formData = new FormData();
-    formData.append('file', fileInput.files[0]);
+    document.getElementById('uploadForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const fileInput = document.getElementById('fileInput');
+        if (!fileInput.files[0]) {
+            alert('請先選擇發票圖片！');
+            return;
+        }
 
-    document.getElementById('loadingTag').style.display = 'block';
-    document.getElementById('result').style.display = 'none';
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
 
-    try {
-        const response = await fetch('/', { method: 'POST', body: formData });
-        const data = await response.json();
-        
-        document.getElementById('jsonOutput').innerText = JSON.stringify(data, null, 4);
-        document.getElementById('result').style.display = 'block';
-    } catch (error) {
-        alert('辨識失敗，請檢查網路或確認圖片是否過大。');
-    } finally {
-        document.getElementById('loadingTag').style.display = 'none';
+        document.getElementById('loadingTag').style.display = 'block';
+        document.getElementById('result').style.display = 'none';
+
+        try {
+            const response = await fetch('/', {
+                method: 'POST', 
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken  // 將 CSRF token 添加到請求頭中
+                }
+            });
+            const data = await response.json();
+            renderKeyValueTable(data);
+            document.getElementById('jsonOutput').innerText = JSON.stringify(data, null, 4);
+            document.getElementById('result').style.display = 'block';
+        } catch (error) {
+            alert('辨識失敗，請檢查網路或確認圖片是否過大。');
+        } finally {
+            document.getElementById('loadingTag').style.display = 'none';
+        }
+    };
+    // 核心：動態建立 Key-Value 表格內容
+    function renderKeyValueTable(data) {
+        const tbody = document.getElementById('kvBody');
+        tbody.innerHTML = ''; // 清空上一次的資料
+
+        // 使用 Object.entries 直接遍歷 JSON 的所有鍵值對
+        Object.entries(data).forEach(([key, value]) => {
+            const row = document.createElement('tr');
+            
+            // 建立 Key 欄位
+            const keyCell = document.createElement('td');
+            keyCell.className = 'key-column';
+            keyCell.innerText = key;
+
+            // 建立 Value 欄位
+            const valueCell = document.createElement('td');
+            valueCell.className = 'value-column';
+            valueCell.innerText = (value === null || value === undefined) ? '' : value;
+
+            row.appendChild(keyCell);
+            row.appendChild(valueCell);
+            tbody.appendChild(row);
+        });
     }
-};
 </script>
 
 </body>

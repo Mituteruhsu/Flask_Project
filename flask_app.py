@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from flask import Flask, request, render_template, jsonify, flash, redirect, url_for
+from flask_wtf import CSRFProtect
 from image_service import ImageService
 from qr_service import QRService
 from ocr_service import OCRService
@@ -11,6 +12,11 @@ from db_service import DB_Service
 #       Flask App
 # ===========================
 app = Flask(__name__)
+
+# 隨機產生一個 SECRET_KEY，確保 CSRF 保護的安全性
+app.config['SECRET_KEY'] = os.urandom(24)
+csrf = CSRFProtect(app)
+# print(f"Flask App 啟動中，使用的 SECRET_KEY 為: {app.config['SECRET_KEY']}")
 
 # 設定 Jsonify 不要自動排序 key，保持原本的順序
 app.json.sort_keys = False  
