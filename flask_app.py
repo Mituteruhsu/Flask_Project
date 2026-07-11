@@ -4,6 +4,7 @@ import sqlite3
 import numpy as np
 from flask import Flask, request, render_template, jsonify, flash, redirect, url_for
 from rapidocr import RapidOCR
+from image_service import ImageService
 from qr_service import QRService
 from ocr_service import OCRService
 from db_service import DB_Service
@@ -27,54 +28,26 @@ DB_PATH = os.path.join(PROJECT_DIR, 'invoices.db')
 DB_Service(DB_PATH)
 # ===== ↑↑↑↑↑ Database ↑↑↑↑↑ =====
 
-# =======================================
-#       Image 預處理與辨識演算法
-# =======================================
-def preprocess_image(image_path):
-    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    if img is None: return None
-    h, w = img.shape
-    if w > 1000:
-        img = cv2.resize(img, (1000, int(h * 1000 / w)), interpolation=cv2.INTER_AREA)
-    _, binary_img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    output_path = os.path.join(UPLOAD_FOLDER, 'preprocessed.png')
-    cv2.imwrite(output_path, binary_img)
-    return output_path
-# ===== ↑↑↑↑↑ Image 預處理與辨識演算法 ↑↑↑↑↑ =====
-
 # ===========================================
 #             前端路由 與 API 串接
 # ===========================================
 @app.route('/', methods=['GET', 'POST'])
 def upload_invoice():
     if request.method == 'POST':
-        file = request.files.get('file')
-        if not file or file.filename == '':
+        img_file = request.files.get('file')
+        if not img_file or img_file.filename == '':
             return jsonify({"error": "未選擇圖片"})
         
-        try:
-            img = cv2.imdecode(np.fromfile(file, dtype=np.uint8), cv2.IMREAD_COLOR)
-            if img is None:
-                print(f"❌ 圖片讀取失敗！")
-                exit()
-            print(f"✅ 圖片讀取成功！尺寸為: {img.shape[1]}x{img.shape[0]}\n")
-        except Exception as e:
-            print(f"❌ 讀取圖片時發生異常: {e}")
-            exit()
+        # 先將圖片預處理，嘗試 QR Code 辨識
+        processed_image = ImageService.preprocess_image(img_file)
         
         # 1. 嘗試 QR Code 辨識
-        final_data = QRService.parse_taiwan_qrcode(img)
+        final_data = QRService.parse_taiwan_qrcode(processed_image)
         
         # 2. 若失敗，啟動 AI-OCR 辨識
         if not final_data:
-            processed_path = preprocess_image(img)
-            # 使用單例模式取得 RapidOCR 引擎，避免每次辨識都重新初始化
-            ocr_engine = OCRService.get_engine()
-            if processed_path:
-                ocr_result, _ = ocr_engine(processed_path)
-                final_data = OCRService.advanced_invoice_corrector(ocr_result)
-            else:
-                return jsonify({"error": "圖片損壞"})
+            print("❌ QR Code 辨識失敗，啟動 AI-OCR 辨識")
+            final_data = OCRService.ocr_process(processed_image)
 
         # 將辨識出的結果，即時寫入 SQLite 資料庫中記錄
         DB_Service(DB_PATH).save_to_database(

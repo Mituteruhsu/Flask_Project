@@ -1,6 +1,7 @@
 # ocr_service.py
 import os
 import re
+from flask import jsonify
 from rapidocr import RapidOCR
 
 class OCRService:
@@ -34,6 +35,18 @@ class OCRService:
                 print(f"❌ 引擎初始化失敗，錯誤原因: {e}")
                 raise e
         return cls._engine
+    
+    @staticmethod  # 👈 定義它是純工具函式
+    def ocr_process(processed_image):
+        """ 使用 RapidOCR 進行文字辨識 """
+        print("ocr_process() - 正在進行文字辨識...")
+        # 使用單例模式取得 RapidOCR 引擎，避免每次辨識都重新初始化
+        ocr_engine = OCRService.get_engine()
+        ocr_result = ocr_engine(processed_image)
+        if ocr_result:
+            print(f"✅ AI-OCR 辨識結果:\n {ocr_result.to_markdown()}")
+        else:
+            return jsonify({"error": "圖片損壞"})
 
     @classmethod
     def advanced_invoice_corrector(cls, ocr_results):

@@ -1,13 +1,14 @@
 import re
 from pyzbar.pyzbar import decode
 from model_recieve import QRCodeInfo
+from image_service import ImageService
 
 class QRService:
     @staticmethod
-    def parse_taiwan_qrcode(uploaded_image):
+    def parse_taiwan_qrcode(img):
         # print(f"test the parse_taiwan_qrcode \n{uploaded_image}")
         # 使用 pyzbar 進行解碼
-        barcodes = decode(uploaded_image)
+        barcodes = decode(img)
 
         # 3. 讀取解碼結果
         for barcode in barcodes:
