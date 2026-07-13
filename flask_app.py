@@ -31,7 +31,9 @@ DB_PATH = os.path.join(PROJECT_DIR, 'invoices.db')
 #       Database
 # ========================
 # 程式啟動時，立即初始化或檢查資料庫
-DB_Service(DB_PATH)
+# 配置 Flask-SQLAlchemy 連線路徑
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_PATH}"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # ===== ↑↑↑↑↑ Database ↑↑↑↑↑ =====
 
 # ===========================================
