@@ -12,7 +12,7 @@ class OCRService:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     DET_MODEL = os.path.join(BASE_DIR, 'models', 'ch_PP-OCRv4_det_infer.onnx')
     REC_MODEL = os.path.join(BASE_DIR, 'models', 'ch_PP-OCRv4_rec_infer.onnx')
-    print("=== ocr_service.py ===")
+    print("=== 初始化 RapidOCR Engine - ocr_service.py ===")
     
     _engine = None  # 用來儲存單一引擎實例
 

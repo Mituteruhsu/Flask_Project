@@ -3,6 +3,7 @@ from flask_login import UserMixin
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import Integer, String, DateTime, ForeignKey, Boolean, Text, inspect
 from datetime import datetime
+from werkzeug.security import generate_password_hash
 
 # ==================== 
 # 定義 SQLAlchemy 基類
@@ -154,3 +155,24 @@ class DBService:
                     print("🎉 資料表全新建立成功。")
                 else:
                     print(" 資料庫多表結構完整性檢查通過，所有 Table 與欄位完全一致。")
+
+    @staticmethod
+    def _seed_admin_user():
+        """ 檢查 users 資料表，若無人則自動建立第一個 admin """
+        try:
+            admin_exists = User.query.filter_by(role='admin').first()
+            if not admin_exists:
+                # 安全地產生密碼雜湊
+                hashed_password = generate_password_hash("admin123")
+                default_admin = User(
+                    username="admin",
+                    email="admin@example.com",
+                    password_hash=hashed_password,
+                    role="admin"
+                )
+                db.session.add(default_admin)
+                db.session.commit()
+                print("🎉 預設管理員建立成功！(帳號: admin / 密碼: admin123)")
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ 建立預設管理員帳號失敗: {e}")

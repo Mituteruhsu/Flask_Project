@@ -5,7 +5,7 @@ from flask_wtf import CSRFProtect
 from image_service import ImageService
 from qr_service import QRService
 from ocr_service import OCRService
-from db_service import DBService, InvoiceRecord
+from db_service import DBService, InvoiceRecord, db
 
 # ===========================
 #       Flask App
