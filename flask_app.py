@@ -5,8 +5,7 @@ from flask_wtf import CSRFProtect
 from image_service import ImageService
 from qr_service import QRService
 from ocr_service import OCRService
-from db_service import DB_Service
-
+from db_service import DBService, InvoiceRecord
 
 # ===========================
 #       Flask App
@@ -34,11 +33,15 @@ DB_PATH = os.path.join(PROJECT_DIR, 'invoices.db')
 # 配置 Flask-SQLAlchemy 連線路徑
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_PATH}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# 核心：初始化 db 並與 app 綁定，防呆資料庫初始化，自動檢查並建立所有資料表
+DBService.init_db(app)
 # ===== ↑↑↑↑↑ Database ↑↑↑↑↑ =====
 
 # ===========================================
 #             前端路由 與 API 串接
 # ===========================================
+# 路由 1：負責「圖片上傳與辨識」，不負責存入資料庫
 @app.route('/', methods=['GET', 'POST'])
 def upload_invoice():
     if request.method == 'POST':
@@ -56,17 +59,51 @@ def upload_invoice():
         if not final_data:
             print("❌ QR Code 辨識失敗，啟動 AI-OCR 辨識")
             final_data = OCRService.ocr_process(processed_image)
-
-        # 將辨識出的結果，即時寫入 SQLite 資料庫中記錄
-        DB_Service(DB_PATH).save_to_database(
-            invoice_num=final_data["發票號碼"],
-            total_amount=final_data["推算總金額"],
-            method=final_data["辨識方法"]
-        )
         
         return jsonify(final_data)
         
     return render_template('index.html')
+
+# 路由 2（新增）：前端確認無誤後，按下確認儲存，發送 POST 請求到這裡
+@app.route('/api/save_invoice', methods=['POST'])
+def save_invoice():
+    """ 接收前端確認後的資料，並正式寫入 SQLAlchemy 資料庫 """
+    try:
+        # 從前端的 AJAX 請求中取得 JSON 資料
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "message": "無效的發票資料"}), 400
+
+        # 改用 SQLAlchemy ORM 語法將資料寫入
+        new_record = InvoiceRecord(
+            invoice_num=data.get("發票號碼"),
+            invoice_date=data.get("開立日期"),
+            random_code=data.get("隨機碼"),
+            sales_amount=data.get("銷售額"),
+            total_amount=data.get("推算總金額"),
+            buyer_invoice_num=data.get("買方統編"),
+            seller_invoice_num=data.get("賣方統編"),
+            aes_encode=data.get("AES加密"),
+            after77_data=data.get("77個字元後的資料"),
+            free_usage=data.get("營業人使用區"),
+            item_count=data.get("品項筆數"),
+            total_item_count=data.get("品項總筆數"),
+            code_type=data.get("編碼類型"),
+            items_detail=data.get("品項明細"),
+            item_quantity=data.get("品項數量"),
+            items_price=data.get("品項單價"),
+            method=data.get("辨識方法", "QR Code"),
+            user_id=None  # 初期尚未串接登入系統，先設為 None
+        )
+        
+        db.session.add(new_record)
+        db.session.commit()
+        return jsonify({"success": True, "message": "發票紀錄儲存成功！"})
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ 資料庫儲存失敗: {e}")
+        return jsonify({"success": False, "message": f"資料庫儲存失敗: {e}"}), 500
 
 @app.route('/base', methods=['GET'])
 def base_view():            
