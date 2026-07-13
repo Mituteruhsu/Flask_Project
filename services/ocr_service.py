@@ -10,8 +10,8 @@ class OCRService:
     # ===============================
     # 取得目前程式所在的路徑，並指定本地端模型路徑
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    DET_MODEL = os.path.join(BASE_DIR, 'models', 'ch_PP-OCRv4_det_infer.onnx')
-    REC_MODEL = os.path.join(BASE_DIR, 'models', 'ch_PP-OCRv4_rec_infer.onnx')
+    DET_MODEL = os.path.join(BASE_DIR, 'models_OCR_onnx', 'ch_PP-OCRv4_det_infer.onnx')
+    REC_MODEL = os.path.join(BASE_DIR, 'models_OCR_onnx', 'ch_PP-OCRv4_rec_infer.onnx')
     print("=== 初始化 RapidOCR Engine - ocr_service.py ===")
     
     _engine = None  # 用來儲存單一引擎實例
