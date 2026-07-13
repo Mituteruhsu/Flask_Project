@@ -1,6 +1,6 @@
 import re
 from pyzbar.pyzbar import decode
-from model_recieve import QRCodeInfo
+from models.qr_model import QRCodeInfo
 
 class QRService:
     @staticmethod
