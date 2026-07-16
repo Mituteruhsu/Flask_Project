@@ -1,0 +1,649 @@
+AI Family Finance Platform Architecture Blueprint v1.0
+
+文件版本：v1.0
+文件類型：Software Architecture Design Document
+文件目的：建立 AI 家庭財務平台之第一階段架構規範，作為後續 Sprint 開發依據。
+
+1. System Architecture Design
+1.1 系統定位
+
+AI Family Finance Platform 是以家庭財務管理為核心的智慧化資料平台。
+
+系統初期以台灣電子發票 QR Code、紙本發票 OCR 為主要資料來源，透過 OCR、AI Parser、分類規則與資料分析能力，將非結構化消費資料轉換為可分析的家庭財務資訊。
+
+本平台不將發票辨識視為主要產品，而是將發票視為財務資料輸入來源。系統核心價值在於建立家庭消費資料模型，提供分類管理、成員歸屬、消費分析、預算管理與未來智慧財務建議能力。
+
+1.2 架構設計原則
+
+本系統採用分層架構（Layered Architecture）與領域導向設計（Domain Driven Design, DDD）的概念進行規劃。
+
+主要設計原則如下：
+
+Domain First
+
+核心資料模型優先於功能模組。
+
+例如：
+
+Invoice（發票）
+Category（分類）
+Person（家庭成員）
+Merchant（商店）
+Budget（預算）
+
+這些屬於平台核心資料，不依賴外部服務。
+
+Service Replaceable
+
+外部能力採可替換服務設計。
+
+例如：
+
+OCR：
+
+RapidOCR
+PaddleOCR
+Tesseract
+
+AI：
+
+OpenAI
+Gemini
+Claude
+Local LLM
+
+匯出：
+
+Excel
+Google Sheet
+CSV
+
+替換服務時，不影響核心資料。
+
+Configuration Driven
+
+可變動內容不寫死於程式。
+
+例如：
+
+分類：
+
+飲食
+ ├── 飲料
+ ├── 餐廳
+ └── 零食
+
+家庭成員：
+
+爸爸
+媽媽
+小孩1
+小孩2
+
+商店規則：
+
+中油 → 油錢
+星巴克 → 飲料
+
+皆由資料庫管理。
+
+1.3 系統分層架構
+
+平台建議分為以下五層：
+
+Presentation Layer
+
+負責使用者互動。
+
+包含：
+
+Web Dashboard
+管理介面
+報表頁面
+API Interface
+
+技術：
+
+Flask Blueprint
+Jinja2 Template
+Bootstrap
+Application Layer
+
+負責流程協調。
+
+例如：
+
+使用者登入流程
+發票處理流程
+AI 分析流程
+
+此層不直接處理資料庫細節。
+
+Domain Layer
+
+負責核心商業邏輯。
+
+包含：
+
+Invoice
+Category
+Person
+Merchant
+Budget
+
+此層是平台長期維護核心。
+
+Infrastructure Layer
+
+負責外部技術整合。
+
+包含：
+
+Database
+OCR Engine
+AI Provider
+File Storage
+Export Service
+Plugin / Extension Layer
+
+提供可替換能力。
+
+例如：
+
+OCR Provider
+
+AI Provider
+
+Exporter
+
+Notification
+
+Plugin 不直接控制核心資料。
+
+2. Domain Model Design
+2.1 Domain Overview
+
+平台核心 Domain 分為：
+
+Identity Domain
+Finance Domain
+Master Data Domain
+Intelligence Domain
+Reporting Domain
+2.2 Identity Domain
+
+負責使用者身份與權限。
+
+主要物件：
+
+User
+
+代表系統登入帳號。
+
+主要欄位：
+
+欄位	說明
+id	使用者編號
+username	登入帳號
+password_hash	密碼雜湊
+email	Email
+status	帳號狀態
+Role
+
+控制系統權限。
+
+例如：
+
+ADMIN
+
+FAMILY_OWNER
+
+MEMBER
+2.3 Finance Domain
+Invoice
+
+代表一張消費憑證。
+
+主要資料：
+
+欄位	說明
+invoice_no	發票號碼
+invoice_date	交易日期
+invoice_type	發票類型
+merchant_id	商店
+total_amount	總金額
+source	來源
+
+來源：
+
+QR_CODE
+
+PAPER
+
+MANUAL
+Invoice Item
+
+商品明細。
+
+設計上商品層級必須獨立。
+
+原因：
+
+同一張發票可能包含：
+
+牛奶 → 飲食
+
+衛生紙 → 生活用品
+
+洗衣精 → 生活用品
+
+因此分類不應放在 Invoice，而應放在 Item。
+
+2.4 Master Data Domain
+
+Master Data 是平台長期使用資料。
+
+不設計為 Plugin。
+
+Category
+
+消費分類。
+
+結構：
+
+飲食
+
+ ├── 飲料
+
+ ├── 餐廳
+
+ └── 零食
+
+資料模型：
+
+Category
+
+id
+
+parent_id
+
+code
+
+name
+
+status
+
+支援：
+
+新增分類
+修改名稱
+停用分類
+自訂家庭分類
+Person
+
+家庭成員。
+
+不使用固定 Enum。
+
+不使用：
+
+FATHER
+
+MOTHER
+
+CHILD_1
+
+改使用資料：
+
+Person
+
+id
+
+name
+
+relationship
+
+status
+
+原因：
+
+家庭結構具有高度變動性。
+
+Merchant
+
+商店資料。
+
+用途：
+
+建立分類預測規則。
+
+例如：
+
+Merchant
+
+星巴克
+
+default_category
+
+drink
+
+未來 AI 可以優先參考 Merchant Rule。
+
+2.5 Intelligence Domain
+
+負責 AI 相關能力。
+
+包含：
+
+OCR Result
+
+保存 OCR 原始結果。
+
+避免重新解析。
+
+AI Analysis
+
+保存 AI 判斷結果。
+
+例如：
+
+{
+ "category":"drink",
+ "confidence":0.93
+}
+
+保存原因：
+
+未來可以分析 AI 判斷品質。
+
+2.6 Reporting Domain
+
+負責分析結果。
+
+包含：
+
+月消費統計
+分類統計
+家庭成員分析
+預算比較
+3. Database Schema Design
+
+第一版建議採 SQLite。
+
+未來可轉 MySQL / PostgreSQL。
+
+3.1 Identity Tables
+users
+id
+
+username
+
+password_hash
+
+email
+
+status
+
+created_at
+roles
+id
+
+name
+user_roles
+user_id
+
+role_id
+3.2 Master Data Tables
+categories
+id
+
+parent_id
+
+code
+
+name
+
+status
+
+created_at
+persons
+id
+
+name
+
+relationship
+
+status
+
+created_at
+merchants
+id
+
+name
+
+default_category_id
+
+status
+3.3 Invoice Tables
+invoices
+id
+
+invoice_no
+
+invoice_type
+
+invoice_date
+
+merchant_id
+
+total_amount
+
+source
+
+created_at
+invoice_items
+id
+
+invoice_id
+
+name
+
+quantity
+
+price
+
+amount
+
+category_id
+
+person_id
+3.4 AI Tables
+ai_analysis
+id
+
+invoice_id
+
+provider
+
+result_json
+
+confidence
+
+created_at
+3.5 Design Decision
+
+資料表設計避免 Plugin 直接新增核心 Schema。
+
+原因：
+
+例如移除 Google Sheet Export Plugin：
+
+不應影響：
+
+Invoice
+
+Category
+
+Person
+
+資料。
+
+4. Module Boundary Design
+4.1 建議平台目錄
+
+第一版：
+
+family_finance/
+
+app/
+
+├── core/
+
+├── auth/
+
+├── dashboard/
+
+├── invoice/
+
+├── category/
+
+├── person/
+
+├── merchant/
+
+├── ai/
+
+├── ocr/
+
+├── export/
+
+├── repositories/
+
+├── services/
+
+├── models/
+
+├── templates/
+
+└── static/
+4.2 Module Responsibility
+auth
+
+負責：
+
+Login
+Logout
+Permission
+
+不處理：
+
+Invoice
+Category
+dashboard
+
+負責：
+
+首頁資料展示
+
+不處理：
+
+資料計算
+invoice
+
+負責：
+
+發票 Domain
+
+包含：
+
+Model
+Service
+Repository
+ai
+
+負責：
+
+AI Provider
+Prompt
+Parser
+
+不直接修改 Invoice。
+
+透過 Service 更新。
+
+export
+
+負責：
+
+Excel
+CSV
+Google Sheet
+
+屬於可替換服務。
+
+5. Sprint 1 Implementation Specification
+Sprint 1 目標
+
+建立平台基礎。
+
+完成：
+
+登入系統
+權限管理
+Dashboard
+共用 Layout
+基礎資料庫
+Flask 架構
+Sprint 1 不包含
+
+暫不加入：
+
+發票
+OCR
+AI
+分類管理
+
+原因：
+
+先建立穩定平台基礎。
+
+Sprint 1 完成後能力
+
+使用者可以：
+
+開啟網站。
+登入帳號。
+進入 Dashboard。
+根據權限看到管理功能。
+後續新增 Module。
+Sprint 1 下一步實作內容
+
+下一階段進入：
+
+Sprint 1：Platform Implementation
+
+產出：
+
+完整專案目錄。
+Flask App Factory。
+Database 初始化。
+User Model。
+Login / Logout。
+Permission Middleware。
+Dashboard Layout。
+Bootstrap UI。
+基礎測試。
+
+完成後將形成第一個可執行版本：
+
+AI Family Finance Platform v0.1
+
+後續 Sprint 2 將在此版本上加入：
+
+Category
+
+Person
+
+Merchant
+
+不修改 Sprint 1 核心登入與平台架構。

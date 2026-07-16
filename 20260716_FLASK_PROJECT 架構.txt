@@ -1,0 +1,33 @@
+FLASK_PROJECT/
+│
+├── run.py                         # Flask 入口
+│
+├── services/                      # 核心功能服務
+│   ├── db_service.py              # 資料庫服務
+│   ├── image_service.py           # 圖片處理服務
+│   ├── ocr_service.py             # OCR 文字辨識服務
+│   ├── qr_service.py              # QR Code 發票解析服務
+│   ├── ai_parser.py               # AI 發票資料解析
+│   ├── ai_category.py             # AI 消費分類
+│   └── validator.py               # 資料驗證
+│
+├── models/                        # 資料模型
+│   ├── data_models/
+│   │   └── qr_model.py            # 定義 QR Code 發票資料模型
+│   │
+│   └── database_models/
+│       ├── user.py
+│       └── invoice.py       
+│
+├── exporters/                     # 匯出功能
+│   ├── excel.py                   # Excel 匯出
+│   ├── sheet.py                   # Sheet 格式處理
+│   └── csv.py                     # CSV 匯出
+│
+├── repository/                    # 資料存取層
+│
+├── templates/                     # Flask HTML Templates
+│
+├── static/                        # 靜態資源
+│
+└── test.py                        # 測試入口

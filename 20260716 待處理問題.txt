@@ -1,0 +1,32 @@
+不建議把你現在整個 db_service.py 直接搬到 repository/。
+
+你目前這個檔案其實混合了 4 種不同責任，應該拆開，而不是搬家。
+
+先分析你現在的 db_service.py
+
+目前內容包含：
+
+db_service.py
+
+├── SQLAlchemy 初始化
+├── Base 定義
+├── Mixin
+├── Permission / Role
+├── User Model
+├── InvoiceRecord Model
+├── Database 初始化
+├── Database Schema 檢查
+└── Admin Seeder
+
+它其實不是單純的 Database Service。
+
+它包含：
+
+內容	真正責任
+db = SQLAlchemy()	Database Instance
+Base	ORM 基礎設定
+TimestampMixin	Model 共用欄位
+User	資料模型
+InvoiceRecord	資料模型
+DBService.init_db()	Database 初始化管理
+_seed_admin_user()	初始資料建立
