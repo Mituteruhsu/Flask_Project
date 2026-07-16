@@ -73,7 +73,6 @@ Service Layer
 | **主要功能** | 帳戶管理、發票管理、AI 智慧分析、基礎資料管理、財務分析、報表匯出 |
 | **開發者** | 徐秉群 (Allen Hsu) |
 | **版本** | v1.0.0 |
-| 線上 Demo | [carbornprojectwebpractice.somee.com](https://carbornprojectwebpractice.somee.com/) |
 
 ---
 
@@ -161,42 +160,6 @@ Service Layer
 
 **系統流程（簡要示意）**
 
-```mermaid
----
-config:
-  layout: dagre
-  theme: redux-dark
-  look: neo
----
-flowchart TB
-U["🧑 使用者"] -- 發出 HTTP 請求 --> B["💻 瀏覽器<br>browser"]
-subgraph MVC["ASP.NET Core MVC 應用程式"]
-    C["Controller"]
-    V["View"]
-    M["Model"]        
-end
-subgraph S["伺服器端"]
-    IIS["IIS Web 伺服器"] -- 請求進入管線 --> MW["Middleware<br>中介層"]
-    MVC
-    SV["Services<br>服務"]
-    RP["Repositories<br>儲存庫"]
-    HP["Helpers<br>輔助類別"]
-end
-B -- HTTP Request --> IIS
-MW -- 轉交至 --> C
-C -- 呼叫 Model 獲取資料 --> M
-M -- 執行商業邏輯 --> SV
-SV -- 資料存取 --> RP
-RP -- CRUD 操作 --> DB[("💾 SQL Server 資料庫")]
-DB --> RP
-RP --> SV
-SV --> M
-M --> C
-C -- 傳遞資料給 View --> V
-V -- 回傳渲染後 HTML --> B
-B -- 顯示結果頁面 --> U
-RP -. 輔助方法：例外處理、格式化 .-> HP
-SV -. 輔助方法：驗證、轉換 .-> HP
 ```
 
 <p align="right" style="font-size:0.8em;"><a href="#Table_of_Contents">📑 目錄</a></p>  
@@ -206,20 +169,6 @@ SV -. 輔助方法：驗證、轉換 .-> HP
 <a name="核心模組"></a>
 ## 💡 核心模組  
 
-| 模組 | 功能描述 |
-|------|-----------|
-| 會員登入 / 註冊 | 支援公司與成員帳號，採 Session 驗證 |
-| 碳排放紀錄 | 可記錄年度排放量與目標值 |
-| 視覺化圖表 | 使用 Chart.js 呈現排放趨勢與比例 |
-| 活動紀錄 | 追蹤登入、更新與資料變更 |
-| 管理者後台 | 查看全公司資料與平均排放狀況 |
-
-- **會員與權限管理**（Admin / Company / Staff / Viewer）  
-- **碳排放記錄與目標**（CompanyEmissions、CompanyEmissionTargets）  
-- **ESG 行動管理**（ESGActions、ESGProgress）  
-- **活動日誌**（ActivityLog）：操作稽核、IP / User-Agent / CorrelationId  
-- **公告系統**（Company 層級）  
-- **報表匯出**：PDF（iTextSharp）、Chart.js 視覺化  
 <p align="right" style="font-size:0.8em;"><a href="#Table_of_Contents">📑 目錄</a></p>  
 
 ---
@@ -359,10 +308,6 @@ erDiagram
 
 
 ### 🧩 架構設計 Architecture Design
-
-- **ASP.NET Core MVC Framework**  
-  採用跨平台、高效能的 ASP.NET Core，具備良好的可維護性與可擴展性。  
-  Built on ASP.NET Core, a high-performance and cross-platform web framework for scalable and maintainable applications.
 
 - **Layered Architecture (多層式架構)**  
   將應用分為 Controller、Service、Repository、Model 等層，確保職責分離。  
