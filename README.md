@@ -3,29 +3,76 @@
   <img src="assets/banner.svg" alt="CarbonProject Banner" width="100%">
 </p>  
 
-# 🌿 CarbonProject — ESG 碳足跡管理系統
+# 🌿 AI 家庭財務平台
 
-> 以 ASP.NET Core MVC 架構開發的 ESG 碳足跡管理平台，協助企業追蹤、分析與報告碳排放數據，實現永續發展與 ESG 目標。
+> # AI Family Finance Platform
 
-![.NET](https://img.shields.io/badge/.NET-8.0-blue?logo=dotnet)
-![C#](https://img.shields.io/badge/Language-C%23-green?logo=csharp)
-![SQL Server](https://img.shields.io/badge/Database-SQL%20Server-red?logo=microsoftsqlserver)
-![Chart.js](https://img.shields.io/badge/Charts-Chart.js-orange?logo=chartdotjs)
-![License](https://img.shields.io/badge/License-Academic-lightgrey)
-![Status](https://img.shields.io/badge/Status-Active-brightgreen)
-[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://carbornprojectwebpractice.somee.com/)
+![Python](https://img.shields.io/badge/Python-3.13-blue?logo=python)
+![Flask](https://img.shields.io/badge/Flask-3.x-black?logo=flask)
+![Bootstrap](https://img.shields.io/badge/Bootstrap-5-purple?logo=bootstrap)
+![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?logo=sqlite)
+![SQLAlchemy](https://img.shields.io/badge/ORM-SQLAlchemy-red)
+![Jinja2](https://img.shields.io/badge/Template-Jinja2-green)
+![RapidOCR](https://img.shields.io/badge/OCR-RapidOCR-orange)
+![QRCode](https://img.shields.io/badge/QRCode-Decoder-success)
+![OpenAI](https://img.shields.io/badge/AI-OpenAI-412991?logo=openai)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
+![Status](https://img.shields.io/badge/Status-In%20Development-yellow)
+
+---
+
+## Project Overview
+
+AI Family Finance Platform 是一套以 **家庭財務管理** 為核心的智慧化平台。
+
+系統透過電子發票 QR Code、OCR 與大型語言模型（LLM）自動解析發票內容，建立可分析的家庭消費資料，協助使用者完成分類、預算管理、消費分析與報表匯出。
+
+本專案採用 Domain-Driven Design（DDD）與 Layered Architecture 作為核心設計理念，所有功能皆以可持續擴充與高維護性為目標。
+
+---
+
+## Architecture
+
+目前平台採用五層架構。
+
+```
+Presentation Layer
+        │
+Application Layer
+        │
+Domain Layer
+        │
+Infrastructure Layer
+        │
+Service Layer
+```
+
+---
+
+## Current Development Stage
+
+目前開發階段：
+
+- ✅ Architecture Blueprint v1
+- ⏳ Sprint 1 - Platform
+- ⏳ Sprint 2 - Master Data
+- ⏳ Sprint 3 - Invoice Engine
+- ⏳ Sprint 4 - AI Pipeline
+- ⏳ Sprint 5 - Analytics
+
+---
 
 ---
 
 ## 🧭 專案資訊 (Project Information)
 | 分類 | 說明 |
 |------|------|
-| **專案名稱** | CarbonProject |
-| **開發框架** | ASP.NET Core MVC |
-| **資料庫** | SQL Server / Azure SQL |
-| **主要功能** | 帳戶管理、碳排追蹤、目標設定、活動紀錄 |
+| **專案名稱** | AI 家庭財務平台 |
+| **開發框架** | Python |
+| **資料庫** | SQL Server / SQLAlchemy |
+| **主要功能** | 帳戶管理、發票管理、AI 智慧分析、基礎資料管理、財務分析、報表匯出 |
 | **開發者** | 徐秉群 (Allen Hsu) |
-| **版本** | v2.0.0 |
+| **版本** | v1.0.0 |
 | 線上 Demo | [carbornprojectwebpractice.somee.com](https://carbornprojectwebpractice.somee.com/) |
 
 ---
