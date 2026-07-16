@@ -96,35 +96,49 @@ Service Layer
 <a name="專案簡介"></a>
 ## 📖 專案簡介  
 
-**CarbonProject** 是一款面向企業的碳排放與 ESG 管理系統。系統以可擴充的多層式架構設計（Controller / Service / Repository / Model），強調安全性與可維護性。  
-它能協助企業：  
-- 🔍 **盤查碳足跡**：自動計算與匯總碳排放數據  
-- 📊 **視覺化分析**：呈現碳排放趨勢與熱點  
-- 📑 **生成 ESG 報告**：ESG 行動管理與報表匯出（含 PDF）。 
-- 👥 **追蹤行動方案**：監控 ESG 進度與目標達成率  
+## 專案簡介（Project Overview）
 
-本系統以 **ASP.NET Core MVC 8.0** 為核心，整合 **SQL Server、iTextSharp PDF、Chart.js** 等技術，  
-並特別強調 **使用者體驗 (UX)** 與 **資安防護 (Security)**。  
+**AI Family Finance Platform** 是一套以家庭財務管理為核心的智慧化平台，透過電子發票 QR Code、OCR 文字辨識，將非結構化的消費資訊轉換為可分析的財務資料。
+
+平台提供:
+- **發票管理**
+- **消費分類**
+- **家庭成員歸屬**
+- **商店管理**
+- **預算追蹤**
+- **統計分析**
+- **報表匯出**
+
+協助使用者建立完整的家庭記帳流程，提升財務管理效率。
+
+本專案採用**分層架構（Layered Architecture）**與**領域導向設計（Domain-Driven Design, DDD）**作為核心設計理念，並以高內聚、低耦合為原則，建立**易於維護**與**持續擴充**的系統架構。
+
+平台初期以台灣電子發票作為主要資料來源，未來將逐步支援更多財務資料來源，並透過 AI 輔助分類、消費分析與自動化流程，打造完整的家庭財務管理平台。
 <p align="right" style="font-size:0.8em;"><a href="#Table_of_Contents">📑 目錄</a></p>  
 
 ---
 <a name="專案導覽"></a>
 ## 🧭 專案導覽
-- [第一章《角色權限系統》](docs/01_RolePermissionSystem.md)
+<!-- - [第一章《角色權限系統》](docs/01_RolePermissionSystem.md)
 - [第二章《使用者認證與註冊系統》](docs/02_UserAuthAndRegister.md)
 - [第三章《JWT 記住我功能》](docs/03_JWTRememberMe.md)
-- [第四章《Claims-based 認證流程》(Claims-based Authentication Flow)](docs/04_ClaimsBasedAuthenticationFlow.md)
+- [第四章《Claims-based 認證流程》(Claims-based Authentication Flow)](docs/04_ClaimsBasedAuthenticationFlow.md) -->
 
 ---
 
 <a name="專案目標"></a>
 ## 🧭 專案目標
 
-- 🧩 建立完整的 **碳排放與 ESG 管理解決方案**
-- 🎯 提供簡潔直觀的 **使用者介面**
-- 🛡️ 強化 **企業資料安全、資料稽核與可追溯的活動紀錄**
-- 🌱 協助企業達成 **碳排放量降低 30%**
-- ‍🔧 支援雲端部署與擴展（IIS / Azure）
+- 建立完整的**家庭財務管理平台**。
+- 自動解析**台灣電子發票**與**紙本發票**內容。
+- 降低人工輸入記帳資料的**時間成本**。
+- 提供 AI 輔助**消費分類**與**資料校正**功能。
+- 支援家庭成員、商店與消費分類等**基礎資料管理**。
+- 提供多維度**消費分析**與**預算管理**功能。
+- 支援 Excel、Google Sheet 等**報表匯出**格式。
+- 建立高內聚、低耦合且**易於維護**的系統架構。
+- 採用模組化設計，提升**系統擴充性**與**維護性**。
+- 作為 AI 應用於家庭財務管理的**實作**與**研究平台**。
 <p align="right" style="font-size:0.8em;"><a href="#Table_of_Contents">📑 目錄</a></p>  
 
 ---
@@ -133,7 +147,7 @@ Service Layer
 ## 🏗️ 系統架構
 
 **技術堆疊（Tech Stack）**
-| 類別 | 技術 |
+<!-- | 類別 | 技術 |
 |------|------|
 | Framework | ASP.NET Core MVC 8.0 |
 | 語言 Language | C# |
@@ -143,7 +157,7 @@ Service Layer
 | 前端 | Razor Views, Bootstrap, Chart.js |
 | 驗證服務 Authentication | Claims-Based + Session + JWT |
 | Logging | ActivityLog 模組 |
-| 部署 | IIS / Azure Web App |
+| 部署 | IIS / Azure Web App | -->
 
 **系統流程（簡要示意）**
 
@@ -343,13 +357,6 @@ erDiagram
 <a name="專案亮點"></a>
 ## 🌟 專案亮點
 
-  本專案採用 **ASP.NET Core MVC 架構**與**多層式設計**原則，結合現代化的技術實踐，打造出高效能、可維護、可擴充的企業級碳管理系統。  
-  The project is built with ASP.NET Core MVC architecture and modern design principles, focusing on performance, scalability, and maintainability for enterprise-level carbon management.  
-- 採用 多層式架構（Controller / Service / Repository）提高可維護性  
-- 使用 EF Core 簡化 ORM 與 Migration 管理  
-- ActivityLog 提供完整操作稽核與追蹤能力  
-- 支援 PDF 匯出（中文字體處理）與 Chart.js 視覺化報表  
-- 設計兼顧安全性（BCrypt、CSRF、HttpOnly Cookie、帳號鎖定）  
 
 ### 🧩 架構設計 Architecture Design
 
@@ -405,26 +412,6 @@ erDiagram
   支援電子郵件驗證、登入失敗次數限制與狀態鎖定，保障系統安全。  
   Supports email confirmation, login attempt limits, and account locking for enhanced security.
 
-### 🌱 永續發展模組 Sustainability Modules
-
-- **CompanyEmissions 與 ESGActions 模組整合**  
-  支援公司碳排放紀錄、ESG 行動追蹤與減碳成效統計。  
-  Integrates company emission data with ESG actions for emission tracking and sustainability analysis.
-
-- **自動計算排放總量 (TotalEmission)**  
-  使用 SQL 計算欄位自動匯總 Scope 1, 2, 3 排放量，減少重複計算。  
-  Uses computed SQL columns to automatically aggregate Scope 1–3 emission data.
-
-### 🧰 技術總覽 Tech Stack  
-| 分類 | 技術 |
-|------|-----------|
-| 前端 (Frontend) | Razor Views, HTML5, Bootstrap |
-| 後端 (Backend) | ASP.NET Core MVC, C# |
-| ORM | Entity Framework Core |
-| 資料庫 (Database) | Microsoft Azure SQL Server |
-| 紀錄與稽核 | ActivityLog Table, Middleware Logging |
-| 架構設計 | Repository Pattern, ViewModel, DI |
-| 安全性 | Session, Role-Based Access, Validation |
 
 <p align="right" style="font-size:0.8em;"><a href="#Table_of_Contents">📑 目錄</a></p>  
 
@@ -432,18 +419,7 @@ erDiagram
 <a name="後續發展建議"></a>
 ## ⌨️ 後續發展建議 
 
-- **加入身份驗證和授權：**  
-  目前專案沒有實現完整的身份驗證和授權功能，建議使用 ASP.NET Core Identity 來實現更安全的身份驗證和授權。  
-- **使用更現代化的前端框架：**  
-  目前專案可能使用 jQuery 或 Bootstrap 等前端框架，建議使用更現代化的前端框架，例如 React、Vue.js 或 Angular，來提高使用者體驗。  
-- **使用更強大的日誌框架：**  
-  目前專案可能使用 ILogger 介面來記錄日誌，建議使用更強大的日誌框架，例如 Serilog 或 NLog，來提供更豐富的日誌功能。  
-- **加入單元測試和整合測試：**  
-  目前專案沒有提供測試程式碼，建議加入單元測試和整合測試，以確保程式碼的品質和穩定性。  
-- **使用更安全的 Session 管理：**  
-  目前專案使用 Session 來管理使用者狀態，建議使用更安全的 Session 管理方式，例如使用 Redis 或 SQL Server 來儲存 Session 資料。  
-- **優化資料庫效能：**  
-  建議對資料庫進行效能優化，例如建立索引、優化查詢語句等，以提高應用程式的效能。  
+
 <p align="right" style="font-size:0.8em;"><a href="#Table_of_Contents">📑 目錄</a></p>  
 
 ---
