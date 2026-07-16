@@ -160,15 +160,15 @@ Service Layer
 
 **系統流程（簡要示意）**
 
-```
-
+略
 <p align="right" style="font-size:0.8em;"><a href="#Table_of_Contents">📑 目錄</a></p>  
 
 ---
 
 <a name="核心模組"></a>
-## 💡 核心模組  
+## 💡 核心模組
 
+略
 <p align="right" style="font-size:0.8em;"><a href="#Table_of_Contents">📑 目錄</a></p>  
 
 ---
