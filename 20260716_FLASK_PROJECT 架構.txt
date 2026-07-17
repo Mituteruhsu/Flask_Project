@@ -50,3 +50,41 @@ repository/        # ORM 查詢與 CRUD
 exporters/         # Excel、CSV、Sheet
 templates/
 static/
+
+進行中架構
+project/
+│
+├── core/
+│   │
+│   ├── __init__.py
+│   ├── database.py
+│   └── config.py
+│
+├── database/
+│   │
+│   ├── __init__.py
+│   │
+│   ├── init_db.py
+│   ├── schema_sync.py
+│   ├── seed.py
+│   │
+│   ├── mixins.py
+│   ├── permissions.py
+│   │
+│   └── models/
+│       │
+│       ├── __init__.py
+│       ├── user.py
+│       └── invoice.py
+│
+├── models/
+│   │
+│   └── data_models/
+│       │
+│       └── qr_model.py
+│
+└── services/
+    │
+    ├── image_service.py
+    ├── ocr_service.py
+    └── qr_service.py

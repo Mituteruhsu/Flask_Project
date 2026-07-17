@@ -9,26 +9,20 @@ project/
 │   └── config.py
 │
 ├── database/
-│   │
 │   ├── __init__.py
-│   │
 │   ├── init_db.py
 │   ├── schema_sync.py
 │   ├── seed.py
-│   │
 │   ├── mixins.py
 │   ├── permissions.py
 │   │
 │   └── models/
-│       │
 │       ├── __init__.py
 │       ├── user.py
 │       └── invoice.py
 │
 ├── models/
-│   │
 │   └── data_models/
-│       │
 │       └── qr_model.py
 │
 └── services/
@@ -36,6 +30,7 @@ project/
     ├── image_service.py
     ├── ocr_service.py
     └── qr_service.py
+
 database/
 ├── __init__.py         # 對外入口
 ├── init_db.py          # 初始化資料庫

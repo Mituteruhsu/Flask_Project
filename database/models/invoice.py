@@ -1,5 +1,5 @@
 from core.database import db
-from models.database_models.mixins import TimestampMixin
+from database.mixins import TimestampMixin
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Integer, String, DateTime, ForeignKey, Boolean, Text
 from datetime import datetime
