@@ -1,7 +1,6 @@
+from core.database import db
 from database.sync import DatabaseSync
 from database.seed import DatabaseSeeder
-from core.database import db
-from database.models.user import User
 
 # ==================== 
 # 資料庫比對與初始化服務
@@ -12,7 +11,7 @@ class DBService:
         """ 全自動多表規格比對與初始化機制 """
         db.init_app(app)
         with app.app_context():
-            DatabaseSync._sync_database()
+            DatabaseSync._sync_datatable()
             DatabaseSeeder._seed_admin_user()
             # 加入其他初始化流程，也都放在這裡: 以下範例
             # DatabaseSeeder._seed_roles()

@@ -6,7 +6,7 @@ from core.database import db
 # ====================
 class DatabaseSync:        
     @staticmethod
-    def _sync_database():
+    def _sync_datatable():
         """ 核心：自動比對資料表結構，若有任何不符則自動重建 """
         inspector = inspect(db.engine)
         need_rebuild = False
