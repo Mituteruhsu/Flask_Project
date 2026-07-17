@@ -1,4 +1,3 @@
-from sqlalchemy import  inspect
 from werkzeug.security import generate_password_hash
 from core.database import db
 from database.models.user import User
