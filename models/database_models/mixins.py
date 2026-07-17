@@ -4,6 +4,7 @@ from datetime import datetime
 # ====================
 #       Mixin
 # ====================
+# 屬於：資料表能力，非核心初始化。
 # 放到資料表定義中，讓[各別]資料表都繼承 Mixin，並自動擁有 created_at 與 updated_at 欄位
 # 例如: class InvoiceRecord(db.Model, TimestampMixin)
 

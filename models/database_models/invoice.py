@@ -1,4 +1,4 @@
-from models.database_models.Base import db
+from core.database import db
 from models.database_models.mixins import TimestampMixin
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Integer, String, DateTime, ForeignKey, Boolean, Text

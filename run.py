@@ -2,10 +2,12 @@ import os
 import sqlite3
 from flask import Flask, request, render_template, jsonify, flash, redirect, url_for
 from flask_wtf import CSRFProtect
+from core.database import db
 from services.image_service import ImageService
 from services.qr_service import QRService
 from services.ocr_service import OCRService
-from services.db_service import DBService, InvoiceRecord, db
+from services.db_service import DBService
+from models.database_models.invoice import InvoiceRecord
 
 # ===========================
 #       Flask App
