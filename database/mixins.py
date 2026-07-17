@@ -17,21 +17,3 @@ class TimestampMixin:
 class SoftDeleteMixin:
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     deleted_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-
-# --------------------
-#   RBAC 權限常數定義
-class Permission:
-    """ 系統權限位元遮罩（未來可做精細控制） """
-    READ = 1          # 0001 (一般檢視、看歷史紀錄)
-    UPLOAD = 2        # 0010 (上傳發票、執行 OCR/QR 辨識)
-    SYNC = 4          # 0100 (手動或自動同步至 Google Sheet)
-    ADMIN = 8         # 1000 (管理後台 CRUD、管理使用者權限)
-
-class Role:
-    """ 系統角色與權限映射 """
-    MAP = {
-        'user': Permission.READ | Permission.UPLOAD | Permission.SYNC, # 一般使用者
-        'auditor': Permission.READ,                                    # 稽核員（只能看不能改）
-        'admin': Permission.READ | Permission.UPLOAD | Permission.SYNC | Permission.ADMIN # 超級管理員
-    }
-# --------------------
