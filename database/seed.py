@@ -2,10 +2,11 @@ from werkzeug.security import generate_password_hash
 from core.database import db
 from database.models.user import User
 
-# ==================== 
-# 資料庫比對與初始化服務
-# ====================
+# =======================
+#       預設資料建立
+# =======================
 class DatabaseSeeder:
+    # 預設 user 資料建立 admin
     @staticmethod
     def _seed_admin_user():
         """ 檢查 users 資料表，若無人則自動建立第一個 admin """

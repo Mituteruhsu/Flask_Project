@@ -35,16 +35,25 @@ class DatabaseSync:
                 break
 
         # 5. 執行最終防呆決策
-        if need_rebuild:
-            print("🔄 正在執行安全重置：清除舊結構並自動依據 models.py 建立全新全表規格...")
-            db.drop_all()   # 安全清除主系統所有資料表
-            db.create_all() # 一口氣全新建立所有符合規格的最新資料表
-            print("🎉 全專案資料表結構已自動同步並建立完畢！")
+        if need_rebuild:            
+            DatabaseSync.rebuild()
+            
+        elif not inspector.get_table_names():
+            # 如果檔案完全不存在(初次執行)
+            DatabaseSync.create()
+            
         else:
-            # 如果檔案完全不存在（第一次執行）
-            if not inspector.get_table_names():
-                print("🔍 偵測到全新環境，正在初始化所有資料表...")
-                db.create_all()
-                print("🎉 資料表全新建立成功。")
-            else:
-                print(" 資料庫多表結構完整性檢查通過，所有 Table 與欄位完全一致。")
+            print(" 資料庫多表結構完整性檢查通過，所有 Table 與欄位完全一致。")
+
+    @staticmethod
+    def rebuild():
+        print("🔄 執行安全重置：清除舊結構並自動依據 models/ 建立新全表規格...")
+        db.drop_all()       # 安全清除主系統所有資料表
+        db.create_all()     # 一口氣全新建立所有符合規格的最新資料表
+        print("🎉 全專案資料表結構已自動同步並建立完畢！")
+
+    @staticmethod
+    def create():
+        print("🔍 偵測到全新環境，正在初始化所有資料表...")
+        db.create_all()     # 建立所有符合規格的最新資料表
+        print("🎉 資料表全新建立成功。")
