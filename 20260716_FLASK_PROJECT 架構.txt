@@ -10,10 +10,10 @@ FLASK_PROJECT/
 │
 ├── database/
 │   ├── __init__.py
-│   ├── init_db.py
-│   ├── mixins.py
-│   ├── seed.py
-│   ├── sync.py
+│   ├── init_db.py          # Database 啟動入口
+│   ├── mixins.py           # TimestampMixin、SoftDeleteMixin
+│   ├── seed.py             # 初始資料(admin、role、permission...)
+│   ├── sync.py             # Schema 同步(create/drop/check)
 │   └── models/
 │       ├── __init__.py
 │       ├── invoice.py      # 定義 QR Code 發票資料模型
