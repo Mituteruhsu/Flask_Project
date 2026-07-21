@@ -1,4 +1,5 @@
 目前這個 AI 家庭記帳專案的方向
+AI 家庭記帳、JWT + Redis、未來 SaaS、多家庭、可擴充訂閱方案
 
 FLASK_PROJECT/
 │
@@ -63,6 +64,22 @@ repository/        # ORM 查詢與 CRUD
 exporters/         # Excel、CSV、Sheet
 templates/
 static/
+
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/run.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/core/database.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/init_db.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/mixins.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/seed.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/sync.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/invoice.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/user.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/RBAC/capability.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/RBAC/permission.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/RBAC/role.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/models/data_models/qr_model.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/services/image_service.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/services/ocr_service.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/services/qr_service.py
 
 進行中架構
 project/
