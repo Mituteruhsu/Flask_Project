@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}管理後台{% endblock %}
+
+{% block content %}
+<h3 class="mb-4">管理後台總覽</h3>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">使用者總數</div>
+                <div class="fs-2 fw-bold">{{ stats.user_count }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">家庭總數</div>
+                <div class="fs-2 fw-bold">{{ stats.family_count }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">發票紀錄總數</div>
+                <div class="fs-2 fw-bold">{{ stats.invoice_count }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">訂閱方案數</div>
+                <div class="fs-2 fw-bold">{{ stats.plan_count }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2">
+    <a href="{{ url_for('dashboard.admin_users') }}" class="btn btn-dark">使用者管理</a>
+    <a href="{{ url_for('dashboard.admin_families') }}" class="btn btn-dark">家庭管理</a>
+</div>
+{% endblock %}

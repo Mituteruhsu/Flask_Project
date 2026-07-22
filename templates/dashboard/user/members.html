@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}家庭成員管理{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>家庭成員管理</h3>
+    <a href="{{ url_for('dashboard.user_index') }}" class="btn btn-outline-secondary btn-sm">返回 Dashboard</a>
+</div>
+
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>暱稱</th>
+            <th>身份</th>
+            <th>狀態</th>
+            <th class="text-end">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for member in members %}
+        <tr>
+            <td>{{ member.nickname }}</td>
+            <td>
+                {% if member.family_role.value == 'parent' %}家長
+                {% elif member.family_role.value == 'child' %}小孩
+                {% else %}唯讀家人{% endif %}
+            </td>
+            <td>
+                <span class="badge {{ 'bg-success' if member.is_active else 'bg-secondary' }}">
+                    {{ '啟用中' if member.is_active else '已停用' }}
+                </span>
+            </td>
+            <td class="text-end">
+                {% if membership.family_role.value == 'parent' and member.id != membership.id %}
+                <form method="POST" action="{{ url_for('dashboard.user_delete_member', member_id=member.id) }}"
+                      onsubmit="return confirm('確定要將「{{ member.nickname }}」移出家庭嗎？');" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">移除</button>
+                </form>
+                {% else %}
+                <span class="text-muted small">-</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if membership.family_role.value != 'parent' %}
+<p class="text-muted small mt-3">只有「家長」身份可以移除家庭成員。</p>
+{% endif %}
+{% endblock %}

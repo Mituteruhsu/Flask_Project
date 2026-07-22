@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}垃圾桶{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>垃圾桶（已刪除的發票紀錄）</h3>
+    <a href="{{ url_for('dashboard.user_index') }}" class="btn btn-outline-secondary btn-sm">返回 Dashboard</a>
+</div>
+
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>發票號碼</th>
+            <th>日期</th>
+            <th>總金額</th>
+            <th>刪除時間</th>
+            <th class="text-end">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for invoice in invoices %}
+        <tr>
+            <td>{{ invoice.invoice_num }}</td>
+            <td>{{ invoice.invoice_date }}</td>
+            <td>{{ invoice.total_amount }}</td>
+            <td>{{ invoice.deleted_at }}</td>
+            <td class="text-end">
+                {% if membership.can_edit_record(invoice) %}
+                <form method="POST" action="{{ url_for('dashboard.user_restore_invoice', invoice_id=invoice.id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-success btn-sm">復原</button>
+                </form>
+                {% else %}
+                <span class="text-muted small">無權限</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-muted">垃圾桶是空的</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

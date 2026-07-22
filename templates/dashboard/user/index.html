@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}我的 Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-0">{{ family.name }}</h3>
+        <span class="text-muted small">
+            我的身份：
+            {% if membership.family_role.value == 'parent' %}家長
+            {% elif membership.family_role.value == 'child' %}小孩
+            {% else %}唯讀家人{% endif %}
+        </span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('dashboard.user_invoice_trash') }}" class="btn btn-outline-secondary btn-sm">垃圾桶</a>
+        <a href="{{ url_for('dashboard.user_members') }}" class="btn btn-outline-dark btn-sm">家庭成員管理</a>
+    </div>
+</div>
+
+<h5 class="mt-4 mb-2">最近的發票紀錄</h5>
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>發票號碼</th>
+            <th>日期</th>
+            <th>總金額</th>
+            <th>記錄人</th>
+            <th class="text-end">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for invoice in invoices %}
+        <tr>
+            <td>{{ invoice.invoice_num }}</td>
+            <td>{{ invoice.invoice_date }}</td>
+            <td>{{ invoice.total_amount }}</td>
+            <td>{{ invoice.owner.username }}</td>
+            <td class="text-end">
+                {% if membership.can_edit_record(invoice) %}
+                <form method="POST" action="{{ url_for('dashboard.user_delete_invoice', invoice_id=invoice.id) }}"
+                      onsubmit="return confirm('確定要刪除這筆發票紀錄嗎？');" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">刪除</button>
+                </form>
+                {% else %}
+                <span class="text-muted small">無權限</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-muted">目前沒有發票紀錄</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -3,11 +3,14 @@ import sqlite3
 from flask import Flask, request, render_template, jsonify, flash, redirect, url_for
 from flask_wtf import CSRFProtect
 from core.database import db
+from core.login import init_login_manager
 from services.image_service import ImageService
 from services.qr_service import QRService
 from services.ocr_service import OCRService
 from database.init_db import DBService
 from database.models.invoice import InvoiceRecord
+from routes.auth import auth_bp
+from routes.dashboard import dashboard_bp
 
 # ===========================
 #       Flask App
@@ -20,7 +23,7 @@ csrf = CSRFProtect(app)
 # print(f"Flask App 啟動中，使用的 SECRET_KEY 為: {app.config['SECRET_KEY']}")
 
 # 設定 Jsonify 不要自動排序 key，保持原本的順序
-app.json.sort_keys = False  
+app.json.sort_keys = False
 # 使用項目目錄下的 uploads 資料夾（解決 Windows /tmp 路徑問題）
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(PROJECT_DIR, 'uploads')
@@ -40,6 +43,14 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 DBService.init_db(app)
 # ===== ↑↑↑↑↑ Database ↑↑↑↑↑ =====
 
+# ========================
+#       Login / Auth
+# ========================
+init_login_manager(app)
+app.register_blueprint(auth_bp)
+app.register_blueprint(dashboard_bp)
+# ===== ↑↑↑↑↑ Login / Auth ↑↑↑↑↑ =====
+
 # ===========================================
 #             前端路由 與 API 串接
 # ===========================================
@@ -50,20 +61,20 @@ def upload_invoice():
         img_file = request.files.get('file')
         if not img_file or img_file.filename == '':
             return jsonify({"error": "未選擇圖片"})
-        
+
         # 先將圖片預處理，嘗試 QR Code 辨識
         processed_image = ImageService.preprocess_image(img_file)
-        
+
         # 1. 嘗試 QR Code 辨識
         final_data = QRService.parse_taiwan_qrcode(processed_image)
-        
+
         # 2. 若失敗，啟動 AI-OCR 辨識
         if not final_data:
             print("❌ QR Code 辨識失敗，啟動 AI-OCR 辨識")
             final_data = OCRService.ocr_process(processed_image)
-        
+
         return jsonify(final_data)
-        
+
     return render_template('index.html')
 
 # 路由 2（新增）：前端確認無誤後，按下確認儲存，發送 POST 請求到這裡
@@ -97,18 +108,18 @@ def save_invoice():
             method=data.get("辨識方法", "QR Code"),
             user_id=None  # 初期尚未串接登入系統，先設為 None
         )
-        
+
         db.session.add(new_record)
         db.session.commit()
         return jsonify({"success": True, "message": "發票紀錄儲存成功！"})
-        
+
     except Exception as e:
         db.session.rollback()
         print(f"❌ 資料庫儲存失敗: {e}")
         return jsonify({"success": False, "message": f"資料庫儲存失敗: {e}"}), 500
 
 @app.route('/base', methods=['GET'])
-def base_view():            
+def base_view():
     return render_template('base.html')
 
 @app.route('/upload', methods=['GET'])
@@ -118,10 +129,10 @@ def upload_view():
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if not request.file:
-        flash('檔案上傳失敗！', 'danger') # 直接傳 danger，前端不用再做 if/else 判斷
+        flash('檔案上傳失敗！', 'danger')  # 直接傳 danger，前端不用再做 if/else 判斷
         return redirect(url_for('upload_view'))
-    
-    flash('發票辨識成功！', 'success') # 直接傳 success
+
+    flash('發票辨識成功！', 'success')  # 直接傳 success
     return redirect(url_for('upload_view'))
 
 # 新增一個 API，讓前端隨時可以查閱歷史發票紀錄
@@ -129,12 +140,12 @@ def upload_file():
 def get_history():
     """ 讀取資料庫，並依時間由新到舊回傳前 50 筆發票紀錄 """
     conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row # 讓讀出來的資料可以用欄位名稱選取
+    conn.row_factory = sqlite3.Row  # 讓讀出來的資料可以用欄位名稱選取
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM invoice_records ORDER BY created_at DESC LIMIT 50')
     rows = cursor.fetchall()
     conn.close()
-    
+
     history_list = []
     for row in rows:
         history_list.append({

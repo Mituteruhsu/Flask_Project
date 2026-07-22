@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}使用者管理{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>使用者管理</h3>
+    <a href="{{ url_for('dashboard.admin_index') }}" class="btn btn-outline-secondary btn-sm">返回總覽</a>
+</div>
+
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>帳號</th>
+            <th>Email</th>
+            <th>角色</th>
+            <th>發票數</th>
+            <th class="text-end">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>
+                <span class="badge {{ 'bg-dark' if user.role == 'admin' else 'bg-secondary' }}">
+                    {{ user.role }}
+                </span>
+            </td>
+            <td>{{ user.invoices|length }}</td>
+            <td class="text-end">
+                {% if user.id != current_user.id %}
+                <form method="POST" action="{{ url_for('dashboard.admin_delete_user', user_id=user.id) }}"
+                      onsubmit="return confirm('確定要刪除使用者「{{ user.username }}」嗎？此動作無法復原。');" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">刪除</button>
+                </form>
+                {% else %}
+                <span class="text-muted small">（自己）</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

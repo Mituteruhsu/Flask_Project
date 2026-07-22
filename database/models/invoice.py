@@ -37,3 +37,5 @@ class InvoiceRecord(db.Model, TimestampMixin):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), nullable=False)       # 隸屬的使用者 ID
     is_synced_to_sheet: Mapped[bool] = mapped_column(Boolean, default=False)                   # 是否同步至 Google Sheet
     synced_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)                       # 同步時間
+
+    # --- 軟刪除欄位由 SoftDeleteMixin 提供：is_deleted / deleted_at ---
