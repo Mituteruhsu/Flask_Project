@@ -19,11 +19,22 @@ FLASK_PROJECT/
 │       ├── __init__.py
 │       ├── invoice.py      # 定義 QR Code 發票資料模型
 │       ├── user.py
-│       └── RBAC/
+│       ├── RBAC/
+│       │   ├── __init__.py
+│       │   ├── capability.py   # 系統能力權限 (System Capability) OCR/AI_PARSE/AI_CATEGORY/
+│       │   ├── permission.py   # 系統功能權限 invoice.create/invoice.edit/invoice.delete/invoice.export
+│       │   ├── role.py
+│       │   ├── role_permission.py
+│       │   └── plan_capability.py
+│       │
+│       ├── subscription/                  # 訂閱層：Plan 決定能用哪些 Capability
+│       │   ├── __init__.py
+│       │   └── plan.py
+│       │
+│       └── family/                        # 業務層：Family 裡的人彼此關係
 │           ├── __init__.py
-│           ├── capability.py
-│           ├── permission.py
-│           └── role.py  
+│           ├── family.py
+│           └── family_member.py
 │
 ├── services/                      # 核心功能服務
 │   ├── image_service.py           # 圖片處理服務
@@ -82,6 +93,15 @@ https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/serv
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/services/qr_service.py
 
 進行中架構
+AI 家庭記帳 SaaS 平台
+JWT + Redis
+多家庭(Multi Tenant)
+未來有付費方案
+家庭共享帳本
+家庭內角色不同
+AI/OCR 功能有收費限制
+未來 Plugin 化
+
 project/
 │
 ├── core/
