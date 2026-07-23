@@ -1,5 +1,6 @@
 # database/models/RBAC/permission.py
 from core.database import db
+from database.models.RBAC.role_permission import role_permissions
 
 class Permission(db.Model):
     __tablename__ = 'permissions'
@@ -8,7 +9,7 @@ class Permission(db.Model):
     description = db.Column(db.String(255), nullable=True)
 
     # 多對多：反向對應 Role.permissions
-    roles = db.relationship("Role", secondary="role_permissions", back_populates="permissions")
+    roles = db.relationship("Role", secondary=role_permissions, back_populates="permissions")
 
     def __repr__(self):
         return f"<Permission {self.name}>"
