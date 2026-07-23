@@ -102,6 +102,7 @@ templates/
 static/
 
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/run.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/core/login.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/core/database.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/init_db.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/mixins.py
@@ -121,6 +122,8 @@ https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/mode
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/services/image_service.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/services/ocr_service.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/services/qr_service.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/routes/auth.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/routes/dashboard.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/static/css/style.css
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/static/js/camera.js
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/static/js/form-handler.js
@@ -128,6 +131,14 @@ https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/stat
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/static/js/subcategory-handler.js
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/base.html
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/confirm.html
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/auth/login.html
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/dashboard/admin/index.html
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/dashboard/admin/families.html
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/dashboard/admin/users.html
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/dashboard/user/index.html
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/dashboard/user/members.html
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/dashboard/user/trash.html
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/utils/decorators.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/index.html
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/smartcropper.html
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/success.html

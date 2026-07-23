@@ -1,5 +1,5 @@
 from core.database import db
-from database.mixins import TimestampMixin
+from database.mixins import TimestampMixin, SoftDeleteMixin
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Integer, String, DateTime, ForeignKey, Boolean, Text
 from datetime import datetime
@@ -8,7 +8,7 @@ from datetime import datetime
 #      資料表定義
 # ====================
 # 發票紀錄資料表
-class InvoiceRecord(db.Model, TimestampMixin):
+class InvoiceRecord(db.Model, TimestampMixin, SoftDeleteMixin):
     __tablename__ = 'invoice_records'
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
