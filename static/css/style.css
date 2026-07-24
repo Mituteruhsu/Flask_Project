@@ -2,19 +2,52 @@
 
 /* 深色主題 */
 body {
-    background-color: #0f2a24;
-    color: #e5e7eb;
+    background-color: #F2F0EB;
+    color: #8CADD3;
 }
+
+/* base.html */
+.navbar {
+    background-color: #1B2A4A;
+}
+
+/* 設定導覽列中所有連結與文字的顏色 */
+.navbar .navbar-brand,
+.navbar a,
+.navbar span {
+    color: #E8ECE9;
+}
+
+/* 設定按鈕的邊框與文字顏色，並處理滑鼠懸停效果 */
+.navbar .btn-outline-light {
+    color: #E8ECE9;
+    border-color: #E8ECE9;
+}
+
+.navbar .btn-outline-light:hover {
+    color: #1B2A4A; /* 滑鼠懸停時文字變深色，利於閱讀 */
+    background-color: #E8ECE9;
+}
+
 
 /* 卡片深色主題 */
 .card {
-    background-color: #1e3b2b;
-    border-color: #33553d;
+    background-color: #D3E4F1;
+    border-color: #2A4B7C;
 }
 
 .card-header {
     background-color: #0f2a1b;
     border-bottom-color: #335541;
+}
+
+#admin-users-btn {
+     background-color: #2D4A3E;
+}
+
+#admin-users-btn:hover {
+    color: #E8ECE9; /* 滑鼠懸停時文字變深色，利於閱讀 */
+    background-color: #5A7D6C;
 }
 
 /* 讓相機預覽即時顯示黑白 */
