@@ -1,7 +1,9 @@
 # routes/dashboard.py
 from datetime import datetime
-from flask import Blueprint, render_template, redirect, url_for, flash, abort, g
+from flask import Blueprint, request, render_template, redirect, url_for, flash, abort, g
 from flask_login import login_required, current_user
+
+from sqlalchemy import inspect, text
 
 from core.database import db
 from database.models.user import User
@@ -31,14 +33,46 @@ def index():
 @dashboard_bp.route("/admin")
 @admin_required
 def admin_index():
-    stats = {
-        "user_count": User.query.count(),
-        "family_count": Family.query.count(),
-        "invoice_count": InvoiceRecord.query.filter_by(is_deleted=False).count(),
-        "plan_count": Plan.query.count(),
-    }
-    return render_template("dashboard/admin/index.html", stats=stats)
+    """
+    SaaS 系統管理者主頁：
+    保留原本功能的同時，新增自動讀取並顯示全站所有 DB Table 數據的功能
+    """
+    # 1. 使用 SQLAlchemy Inspector 動態反射資料庫中所有的 Table 名稱
+    inspector = inspect(db.engine)
+    table_names = inspector.get_table_names()
 
+    # 2. 取得網址帶入的 table 參數 (例如: /dashboard/admin?table=user)
+    # 預設為 table 列表的第一個，若尚無 table 則為 None
+    selected_table = request.args.get('table', table_names[0] if table_names else None)
+
+    table_columns = []
+    table_rows = []
+    total_count = 0
+
+    # 3. 針對選定的 Table 查詢欄位與資料列
+    if selected_table and selected_table in table_names:
+        # 讀取欄位名稱
+        columns_info = inspector.get_columns(selected_table)
+        table_columns = [col['name'] for col in columns_info]
+
+        # 查詢 Table 內容 (加上 LIMIT 100 避免大資料卡死)
+        query = text(f'SELECT * FROM "{selected_table}" LIMIT 100')
+        result = db.session.execute(query)
+        table_rows = [dict(row._mapping) for row in result]
+
+        # 查詢總筆數
+        count_query = text(f'SELECT COUNT(*) FROM "{selected_table}"')
+        total_count = db.session.execute(count_query).scalar()
+
+    # 渲染至你原本的 templates/dashboard/admin/index.html
+    return render_template(
+        'dashboard/admin/index.html',
+        table_names=table_names,
+        selected_table=selected_table,
+        table_columns=table_columns,
+        table_rows=table_rows,
+        total_count=total_count
+    )
 
 @dashboard_bp.route("/admin/users")
 @admin_required

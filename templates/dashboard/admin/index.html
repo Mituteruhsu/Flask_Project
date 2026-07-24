@@ -1,46 +1,97 @@
 {% extends "base.html" %}
-{% block title %}管理後台{% endblock %}
+
+{% block title %}系統管理者儀表板 - 資料庫檢視器{% endblock %}
 
 {% block content %}
-<h3 class="mb-4">管理後台總覽</h3>
+<div class="container-fluid py-4">
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center bg-dark text-white p-3 rounded">
+        <h4 class="mb-0">🛠️ SaaS 系統營運後台 - DB 全表總覽</h4>
+        <span class="badge bg-info text-dark">權限級別: sys_admin</span>
+      </div>
+    </div>
+  </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card text-center shadow-sm">
-            <div class="card-body">
-                <div class="text-muted small">使用者總數</div>
-                <div class="fs-2 fw-bold">{{ stats.user_count }}</div>
-            </div>
+  <div class="row">
+    <!-- 左側：資料表清單選單 -->
+    <div class="col-md-3 col-lg-2 mb-3">
+      <div class="card shadow-sm">
+        <div class="card-header bg-secondary text-white fw-bold">
+          🗄️ 資料庫 Table 列表
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center shadow-sm">
-            <div class="card-body">
-                <div class="text-muted small">家庭總數</div>
-                <div class="fs-2 fw-bold">{{ stats.family_count }}</div>
-            </div>
+        <div class="list-group list-group-flush" style="max-height: 70vh; overflow-y: auto;">
+          {% for name in table_names %}
+            <a href="{{ url_for('dashboard.admin_index', table=name) }}" 
+               class="list-group-item list-group-item-action {% if name == selected_table %}active fw-bold{% endif %}">
+              <i class="bi bi-table me-2"></i>{{ name }}
+            </a>
+          {% endfor %}
         </div>
+      </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center shadow-sm">
-            <div class="card-body">
-                <div class="text-muted small">發票紀錄總數</div>
-                <div class="fs-2 fw-bold">{{ stats.invoice_count }}</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center shadow-sm">
-            <div class="card-body">
-                <div class="text-muted small">訂閱方案數</div>
-                <div class="fs-2 fw-bold">{{ stats.plan_count }}</div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="d-flex gap-2">
-    <a href="{{ url_for('dashboard.admin_users') }}" class="btn btn-dark" id="admin-users-btn">使用者管理</a>
-    <a href="{{ url_for('dashboard.admin_families') }}" class="btn btn-dark" id="admin-users-btn">家庭管理</a>
+    <!-- 右側：資料表內容詳細區 -->
+    <div class="col-md-9 col-lg-10">
+      {% if selected_table %}
+        <div class="card shadow-sm">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0">
+              目前檢視 Table: <code class="fs-4 text-primary">{{ selected_table }}</code>
+            </h5>
+            <span class="badge bg-light text-dark border">
+              總資料筆數：<strong>{{ total_count }}</strong> 筆（最多顯示 100 筆）
+            </span>
+          </div>
+
+          <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 65vh;">
+              <table class="table table-hover table-striped border-0 mb-0 align-middle">
+                <thead class="table-dark sticky-top">
+                  <tr>
+                    {% for col in table_columns %}
+                      <th scope="col" class="text-nowrap px-3">{{ col }}</th>
+                    {% endfor %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% if table_rows %}
+                    {% for row in table_rows %}
+                      <tr>
+                        {% for col in table_columns %}
+                          <td class="text-nowrap px-3">
+                            {% if row[col] is none %}
+                              <span class="badge bg-secondary opacity-50">NULL</span>
+                            {% elif row[col] is sameas true %}
+                              <span class="badge bg-success">TRUE</span>
+                            {% elif row[col] is sameas false %}
+                              <span class="badge bg-danger">FALSE</span>
+                            {% else %}
+                              {{ row[col] }}
+                            {% endif %}
+                          </td>
+                        {% endfor %}
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr>
+                      <td colspan="{{ table_columns|length }}" class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        目前此資料表尚無任何資料紀錄
+                      </td>
+                    </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="alert alert-warning" role="alert">
+          尚未偵測到任何資料庫 Table，請先確認 `database/init_db.py` 是否已正常執行。
+        </div>
+      {% endif %}
+    </div>
+  </div>
 </div>
 {% endblock %}
