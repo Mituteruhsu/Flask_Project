@@ -138,11 +138,11 @@ https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/temp
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/dashboard/user/index.html
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/dashboard/user/members.html
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/dashboard/user/trash.html
-https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/utils/decorators.py
-https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/index.html
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/base.html
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/smartcropper.html
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/success.html
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/templates/upload.html
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/utils/decorators.py
 
 進行中架構
 AI 家庭記帳 SaaS 平台
