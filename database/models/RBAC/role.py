@@ -1,6 +1,7 @@
 # database/models/RBAC/role.py
 from core.database import db
 from database.models.RBAC.role_permission import role_permissions
+from database.models.RBAC.user_roles import user_roles
 
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -10,6 +11,7 @@ class Role(db.Model):
 
     # 多對多：一個 Role 有多個 Permission，一個 Permission 也能給多個 Role 使用
     permissions = db.relationship("Permission", secondary=role_permissions, back_populates="roles")
+    users = db.relationship("User", secondary=user_roles, back_populates="roles")
 
     def __repr__(self):
         return f"<Role {self.name}>"

@@ -2,7 +2,9 @@ from core.database import db
 from flask_login import UserMixin
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Integer, String
+from database.models.RBAC.role import Role
 from database.models.invoice import InvoiceRecord
+from database.models.RBAC.user_roles import user_roles
 
 # ====================
 #      資料表定義
@@ -15,7 +17,6 @@ class User(UserMixin, db.Model):
     username: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(200), nullable=True)
-    role: Mapped[str] = mapped_column(String(20), default='user')
     google_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=True)
     avatar: Mapped[str] = mapped_column(String(255), nullable=True)
     google_credentials: Mapped[str] = mapped_column(String(2000), nullable=True)
@@ -23,3 +24,6 @@ class User(UserMixin, db.Model):
     
     # 一對多關聯：一個使用者擁有多筆發票紀錄
     invoices: Mapped[list["InvoiceRecord"]] = relationship("InvoiceRecord", backref="owner", lazy=True)
+
+    # 多對多關聯：一個使用者可以有多個角色，一個角色也可以給多個使用者
+    roles: Mapped[list["Role"]] = relationship("Role", secondary=user_roles, back_populates="users")

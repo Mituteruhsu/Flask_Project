@@ -17,7 +17,8 @@ class DatabaseSeeder:
         """ 檢查 users 資料表，若無人則自動建立第一個 admin """
         print("檢查 users 資料表，若無人則自動建立第一個 admin")
         try:
-            admin_exists = User.query.filter_by(role='admin').first()
+            admin_role = Role.query.filter_by(name='admin').first()
+            admin_exists = User.query.filter(User.roles.contains(admin_role)).first()
             if not admin_exists:
                 # 安全地產生密碼雜湊
                 hashed_password = generate_password_hash("admin123")
@@ -25,8 +26,8 @@ class DatabaseSeeder:
                     username="admin",
                     email="admin@example.com",
                     password_hash=hashed_password,
-                    role="admin"
                 )
+                default_admin.roles.append(admin_role) # 建立關聯
                 db.session.add(default_admin)
                 db.session.commit()
                 print("🎉 預設管理員建立成功！(帳號: admin / 密碼: admin123)")
@@ -50,11 +51,13 @@ class DatabaseSeeder:
         print("檢查 roles 資料表，若無資料則建立預設角色與權限對應")
         try:
             role_permission_map = {
+                "super_admin": ["invoice.view", "invoice.create", "invoice.edit", "invoice.delete", "invoice.export"],
                 "parent": ["invoice.view", "invoice.create", "invoice.edit", "invoice.delete", "invoice.export"],
                 "child": ["invoice.view", "invoice.create", "invoice.edit", "invoice.export"],
                 "viewer": ["invoice.view"],
             }
             role_descriptions = {
+                "super_admin": "超級管理者：可管理所有使用者、家庭、帳目，擁有所有權限",
                 "parent": "家長：可管理成員、編輯/刪除所有帳目、設定方案",
                 "child": "小孩：可新增/編輯自己的帳目，不能刪除",
                 "viewer": "唯讀家人：只能查看，不能異動",
