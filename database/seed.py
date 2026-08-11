@@ -51,13 +51,13 @@ class DatabaseSeeder:
         print("檢查 roles 資料表，若無資料則建立預設角色與權限對應")
         try:
             role_permission_map = {
-                "super_admin": ["invoice.view", "invoice.create", "invoice.edit", "invoice.delete", "invoice.export"],
+                "admin": ["invoice.view", "invoice.create", "invoice.edit", "invoice.delete", "invoice.export"],
                 "parent": ["invoice.view", "invoice.create", "invoice.edit", "invoice.delete", "invoice.export"],
                 "child": ["invoice.view", "invoice.create", "invoice.edit", "invoice.export"],
                 "viewer": ["invoice.view"],
             }
             role_descriptions = {
-                "super_admin": "超級管理者：可管理所有使用者、家庭、帳目，擁有所有權限",
+                "admin": "超級管理者：可管理所有使用者、家庭、帳目，擁有所有權限",
                 "parent": "家長：可管理成員、編輯/刪除所有帳目、設定方案",
                 "child": "小孩：可新增/編輯自己的帳目，不能刪除",
                 "viewer": "唯讀家人：只能查看，不能異動",
