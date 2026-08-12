@@ -9,9 +9,8 @@ from core.database import db
 from database.models.user import User
 from database.models.family.family import Family
 from database.models.family.family_member import FamilyMember, FamilyRole
-from database.models.subscription.plan import Plan
 from database.models.invoice import InvoiceRecord
-from utils.decorators import admin_required, family_member_required, family_role_required
+from utils.decorators import admin_required, family_member_required, family_role_required, user_has_role
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
@@ -22,8 +21,10 @@ dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 @dashboard_bp.route("/")
 @login_required
 def index():
-    if current_user.role == "admin":
+    # For admin
+    if user_has_role("admin"):
         return redirect(url_for("dashboard.admin_index"))
+    # For user
     return redirect(url_for("dashboard.user_index"))
 
 
