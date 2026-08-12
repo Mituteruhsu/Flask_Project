@@ -25,6 +25,7 @@ FLASK_PROJECT/
 │       │   ├── capability.py       # 系統能力權限 (System Capability) OCR/AI_PARSE/AI_CATEGORY/
 │       │   ├── permission.py       # 系統功能權限 invoice.create/invoice.edit/invoice.delete/invoice.export
 │       │   ├── role.py
+│       │   ├── user_roles.py
 │       │   ├── role_permission.py
 │       │   └── plan_capability.py
 │       │
@@ -115,6 +116,7 @@ https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/data
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/RBAC/role.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/RBAC/role_permission.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/RBAC/plan_capability.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/RBAC/user_roles.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/family/family.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/family/family_member.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/subscription/plan.py
