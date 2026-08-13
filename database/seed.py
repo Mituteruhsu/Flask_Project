@@ -31,6 +31,8 @@ class DatabaseSeeder:
                 db.session.add(default_admin)
                 db.session.commit()
                 print("🎉 預設管理員建立成功！(帳號: admin / 密碼: admin123)")
+            else:
+                print("✅ 已存在管理員帳號，無需建立預設管理員")
         except Exception as e:
             db.session.rollback()
             print(f"❌ 建立預設管理員帳號失敗: {e}")
