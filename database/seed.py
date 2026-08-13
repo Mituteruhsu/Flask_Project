@@ -42,9 +42,8 @@ class DatabaseSeeder:
         """
         系統角色 (Role) 與 Role<->Permission 對應。
 
-        注意：目前 User 表只有簡單的 role 字串欄位（admin/user），
-        還沒有 User <-> Role 的正式關聯表，所以這裡先把 Role/Permission 的
-        「資料」建好，方便你之後要做更細的功能權限時，直接加一張
+        注意：目前有 User <-> Role 的正式關聯表，所以這裡先把 Role/Permission 的
+        「資料」建好，方便之後要做更細的功能權限時，直接加一張
         user_roles 關聯表就能接上，不用重新設計 Role 本身。
 
         角色命名故意跟 FamilyMember.FamilyRole 的 value 對齊（parent/child/viewer），
