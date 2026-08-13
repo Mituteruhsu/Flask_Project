@@ -25,8 +25,8 @@
             <td>{{ user.username }}</td>
             <td>{{ user.email }}</td>
             <td>
-                <span class="badge {{ 'bg-dark' if user.role == 'admin' else 'bg-secondary' }}">
-                    {{ user.role }}
+                <span class="badge {{ 'bg-dark' if user.is_admin else 'bg-secondary' }}">
+                    {{ user.roles | map(attribute='name') | join(', ') if user.roles else '未指定角色' }}
                 </span>
             </td>
             <td>{{ user.invoices|length }}</td>
