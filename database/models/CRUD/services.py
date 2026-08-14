@@ -6,7 +6,7 @@ from database.models.RBAC.capability import Capability
 from database.models.family.family_member import FamilyMember, FamilyRole
 from database.models.family.family import Family
 
-# 使用者專用 Service，直接繼承所有 CRUD 功力
+# User 專用 Service，直接繼承所有 CRUD 功能
 class UserService(CRUDService):
     def __init__(self):
         super().__init__(User)

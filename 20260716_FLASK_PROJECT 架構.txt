@@ -18,6 +18,11 @@ FLASK_PROJECT/
 │   ├── sync.py             # Schema 同步(create/drop/check)
 │   └── models/
 │       ├── __init__.py
+│       ├── CRUD/
+│       │   ├── __init__.py
+│       │   ├── CRUD_service.py       # 基本的功能包含/新增/查詢/更新/刪除
+│       │   └── services.py
+│       │
 │       ├── invoice.py              # 定義 QR Code 發票資料模型
 │       ├── user.py
 │       ├── RBAC/
@@ -111,6 +116,8 @@ https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/data
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/sync.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/invoice.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/user.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/CRUD/services.py
+https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/CRUD/CRUD_service.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/RBAC/capability.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/RBAC/permission.py
 https://raw.githubusercontent.com/Mituteruhsu/Flask_Project/refs/heads/main/database/models/RBAC/role.py
