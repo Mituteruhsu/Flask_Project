@@ -12,8 +12,18 @@ from database.models.family.family_member import FamilyMember, FamilyRole
 from database.models.invoice import InvoiceRecord
 from utils.decorators import admin_required, family_member_required, family_role_required, user_has_role
 
+from database.models.CRUD.services import UserService, RoleService, PermissionService, CapabilityService, FamilyMemberService, FamilyRoleService, FamilyService
+
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
+# 初始化 Service 實例
+user_service = UserService()
+role_service = RoleService()
+permission_service = PermissionService()
+capability_service = CapabilityService()
+family_member_service = FamilyMemberService()
+family_role_service = FamilyRoleService()
+family_service = FamilyService()
 
 # ==========================================================
 #  進入點：依角色自動導向 admin 或 user dashboard

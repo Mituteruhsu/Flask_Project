@@ -1,7 +1,7 @@
 # database/models/CRUD/CRUD_service.py
 from core.database import db
 
-class CRUDService:
+class BaseService:
     def __init__(self, model):
         self.model = model  # 綁定具體的 db.Model
 
