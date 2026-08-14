@@ -30,42 +30,25 @@ from flask_login import current_user
 from database.models.family.family_member import FamilyMember, FamilyRole
 
 # ============================
-#       User RBAC Helper
+# User RBAC Helper
 # ============================
 
 def user_has_role(role_name: str) -> bool:
     """
-    判斷目前登入使用者是否擁有指定 Role。
-
-    Role 來源：
-        User
-         ↓
-        user_roles
-         ↓
-        Role
-
-    不依賴 User.role 欄位。
+    判斷登入使用者是否擁有指定 Role。
     """
-
     if not current_user.is_authenticated:
         return False
+    
     return any(
         role.name == role_name
         for role in current_user.roles
     )
 
-
 def user_has_permission(permission_name: str) -> bool:
     """
     判斷目前登入使用者是否擁有指定 Permission。
-
-    User
-      ↓
-    Roles
-      ↓
-    Permissions
     """
-
     if not current_user.is_authenticated:
         return False
 
@@ -76,22 +59,14 @@ def user_has_permission(permission_name: str) -> bool:
     )
 
 # ============================
-#       System Role
+# System Role
 # ============================
 
 def role_required(*allowed_roles: str):
     """
     系統角色限制。
-
-    例如：
-
-        @role_required("admin")
-
-    或：
-
-        @role_required("admin", "support")
+    用法：@role_required("admin") 或 @role_required("admin", "support")
     """
-
     def decorator(view_func):
         @wraps(view_func)
         def wrapped(*args, **kwargs):
@@ -106,22 +81,14 @@ def role_required(*allowed_roles: str):
         return wrapped
     return decorator
 
-# =================
-#       Admin
-# =================
+# ============================
+# Admin
+# ============================
 
 def admin_required(view_func):
     """
     平台管理者權限。
-    Admin 身份完全由：
-        User
-          ↓
-        user_roles
-          ↓
-        Role(name='admin')
-    決定。
-
-    不再使用：current_user.role
+    不使用：current_user.role
     """
 
     @wraps(view_func)
@@ -133,9 +100,9 @@ def admin_required(view_func):
         return view_func(*args, **kwargs)
     return wrapped
 
-# ==========================================================
+# ============================
 # Permission
-# ==========================================================
+# ============================
 
 def permission_required(*required_permissions: str):
     """
@@ -163,15 +130,14 @@ def permission_required(*required_permissions: str):
         return wrapped
     return decorator
 
-# ==========================================================
+# ============================
 # Family Member
-# ==========================================================
+# ============================
 
 def family_member_required(view_func):
     """
     必須是啟用中的家庭成員。
-    找到的 FamilyMember 會放入：
-        g.membership
+    找到的 FamilyMember 會放入： g.membership
     必須是某個家庭的成員才能進入。
     會把當下使用者在該家庭的 FamilyMember 記錄放到 g.membership，
     方便後續在 view 或 template 裡判斷權限（例如 parent / child / viewer）。
@@ -194,9 +160,9 @@ def family_member_required(view_func):
         return view_func(*args, **kwargs)
     return wrapped
 
-# ==========================================================
+# ============================
 # Family Role
-# ==========================================================
+# ============================
 
 def family_role_required(*allowed_roles: FamilyRole):
     """
