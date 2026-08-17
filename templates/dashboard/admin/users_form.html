@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "dashboard/form_modal.html" import simple_field %}
+{% block title %}{{ "編輯" if mode == "edit" else "新增" }}使用者{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>{{ "編輯" if mode == "edit" else "新增" }}使用者</h3>
+    <a href="{{ url_for('dashboard.admin_users') }}" class="btn btn-outline-secondary btn-sm">返回列表</a>
+</div>
+
+<form method="POST" class="col-md-6">
+    {{ form.hidden_tag() }}
+    {{ simple_field(form.username) }}
+    {{ simple_field(form.email) }}
+    {{ simple_field(form.password) }}
+    {% if mode == "edit" %}
+    <small class="text-muted d-block mb-3">密碼留空表示不修改</small>
+    {% endif %}
+    {{ simple_field(form.role_ids) }}
+    <button type="submit" class="btn btn-dark">儲存</button>
+</form>
+{% endblock %}

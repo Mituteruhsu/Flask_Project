@@ -6,13 +6,20 @@ from flask_login import login_required, current_user
 from sqlalchemy import inspect, text
 
 from core.database import db
+from forms.user_forms import UserForm
+from forms.family_forms import FamilyForm
+from forms.member_forms import FamilyMemberForm
+from forms.invoice_form import InvoiceForm
 from database.models.user import User
+from database.models.RBAC.role import Role
+from database.models.subscription.plan import Plan
 from database.models.family.family import Family
 from database.models.family.family_member import FamilyMember, FamilyRole
 from database.models.invoice import InvoiceRecord
 from utils.decorators import admin_required, family_member_required, family_role_required, user_has_role
-
+from werkzeug.security import generate_password_hash
 from database.models.CRUD.services import UserService, RoleService, PermissionService, CapabilityService, FamilyMemberService, FamilyRoleService, FamilyService
+
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
@@ -89,8 +96,50 @@ def admin_index():
 @admin_required
 def admin_users():
     users = User.query.order_by(User.id.asc()).all()
-    return render_template("dashboard/admin/users.html", users=users)
+    table_names = inspect(db.engine).get_table_names()
+    return render_template("dashboard/admin/users.html", users=users, table_names=table_names)
 
+@dashboard_bp.route("/admin/users/create", methods=["GET", "POST"])
+@admin_required
+def admin_create_user():
+    form = UserForm()
+    form.role_ids.choices = [(r.id, r.name) for r in Role.query.all()]
+
+    if form.validate_on_submit():
+        user = user_service.create(
+            username=form.username.data,
+            email=form.email.data,
+            password_hash=generate_password_hash(form.password.data or "changeme123"),
+        )
+        user.roles = Role.query.filter(Role.id.in_(form.role_ids.data)).all()
+        db.session.commit()
+        flash(f"已建立使用者「{user.username}」", "success")
+        return redirect(url_for("dashboard.admin_users"))
+
+    return render_template("dashboard/admin/users_form.html", form=form, mode="create")
+
+
+@dashboard_bp.route("/admin/users/<int:user_id>/edit", methods=["GET", "POST"])
+@admin_required
+def admin_edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+    form = UserForm(obj=user)
+    form.role_ids.choices = [(r.id, r.name) for r in Role.query.all()]
+
+    if request.method == "GET":
+        form.role_ids.data = [r.id for r in user.roles]
+
+    if form.validate_on_submit():
+        user.username = form.username.data
+        user.email = form.email.data
+        if form.password.data:  # 有填才改密碼
+            user.password_hash = generate_password_hash(form.password.data)
+        user.roles = Role.query.filter(Role.id.in_(form.role_ids.data)).all()
+        db.session.commit()
+        flash(f"已更新使用者「{user.username}」", "success")
+        return redirect(url_for("dashboard.admin_users"))
+
+    return render_template("dashboard/admin/users_form.html", form=form, mode="edit", user=user)
 
 @dashboard_bp.route("/admin/users/<int:user_id>/delete", methods=["POST"])
 @admin_required
@@ -110,8 +159,41 @@ def admin_delete_user(user_id):
 @admin_required
 def admin_families():
     families = Family.query.order_by(Family.id.asc()).all()
-    return render_template("dashboard/admin/families.html", families=families)
+    table_names = inspect(db.engine).get_table_names()   # 補這行
+    return render_template("dashboard/admin/families.html", families=families, table_names=table_names)
 
+@dashboard_bp.route("/admin/families/create", methods=["GET", "POST"])
+@admin_required
+def admin_create_family():
+    form = FamilyForm()
+    form.plan_id.choices = [(0, "未設定")] + [(p.id, p.name) for p in Plan.query.all()]
+
+    if form.validate_on_submit():
+        family_service.create(
+            name=form.name.data,
+            owner_user_id=current_user.id,
+            plan_id=form.plan_id.data or None,
+        )
+        flash(f"已建立家庭「{form.name.data}」", "success")
+        return redirect(url_for("dashboard.admin_families"))
+
+    return render_template("dashboard/admin/family_form.html", form=form, mode="create")
+
+@dashboard_bp.route("/admin/families/<int:family_id>/edit", methods=["GET", "POST"])
+@admin_required
+def admin_edit_family(family_id):
+    family = Family.query.get_or_404(family_id)
+    form = FamilyForm(obj=family)
+    form.plan_id.choices = [(0, "未設定")] + [(p.id, p.name) for p in Plan.query.all()]
+
+    if form.validate_on_submit():
+        family.name = form.name.data
+        family.plan_id = form.plan_id.data or None
+        db.session.commit()
+        flash(f"已更新家庭「{family.name}」", "success")
+        return redirect(url_for("dashboard.admin_families"))
+
+    return render_template("dashboard/admin/family_form.html", form=form, mode="edit", family=family)
 
 @dashboard_bp.route("/admin/families/<int:family_id>/delete", methods=["POST"])
 @admin_required
@@ -148,6 +230,24 @@ def user_index():
         invoices=recent_invoices,
     )
 
+# ---------- User：Invoice Edit（獨立頁面） ----------
+@dashboard_bp.route("/user/invoices/<int:invoice_id>/edit", methods=["GET", "POST"])
+@login_required
+@family_member_required
+def user_edit_invoice(invoice_id):
+    membership: FamilyMember = g.membership
+    invoice = InvoiceRecord.query.get_or_404(invoice_id)
+
+    if not membership.can_edit_record(invoice):
+        abort(403)
+
+    form = InvoiceForm(obj=invoice)
+    if form.validate_on_submit():
+        form.populate_obj(invoice)
+        db.session.commit()
+        flash("發票資料已更新", "success")
+        return redirect(url_for("dashboard.user_index"))
+    return render_template("dashboard/user/invoice_form.html", form=form, invoice=invoice)
 
 @dashboard_bp.route("/user/invoices/<int:invoice_id>/delete", methods=["POST"])
 @login_required
@@ -215,6 +315,49 @@ def user_members():
         "dashboard/user/members.html", members=members, membership=membership
     )
 
+@dashboard_bp.route("/user/members/add", methods=["GET", "POST"])
+@login_required
+@family_member_required
+@family_role_required(FamilyRole.PARENT)
+def user_add_member():
+    membership: FamilyMember = g.membership
+    form = FamilyMemberForm()
+
+    if form.validate_on_submit():
+        family_member_service.create(
+            family_id=membership.family_id,
+            user_id=current_user.id,  # 實務上這裡應改成「邀請」流程去綁定其他 user_id
+            nickname=form.nickname.data,
+            family_role=form.family_role.data,
+            is_active=form.is_active.data,
+        )
+        flash("已新增家庭成員", "success")
+        return redirect(url_for("dashboard.user_members"))
+    return render_template("dashboard/user/member_form.html", form=form, mode="create")
+
+@dashboard_bp.route("/user/members/<int:member_id>/edit", methods=["GET", "POST"])
+@login_required
+@family_member_required
+@family_role_required(FamilyRole.PARENT)
+def user_edit_member(member_id):
+    membership: FamilyMember = g.membership
+    target = FamilyMember.query.get_or_404(member_id)
+    if target.family_id != membership.family_id:
+        abort(403)
+
+    form = FamilyMemberForm(obj=target)
+    if request.method == "GET":
+        form.family_role.data = target.family_role.value
+
+    if form.validate_on_submit():
+        target.nickname = form.nickname.data
+        target.family_role = FamilyRole(form.family_role.data)
+        target.is_active = form.is_active.data
+        db.session.commit()
+        flash("已更新成員資料", "success")
+        return redirect(url_for("dashboard.user_members"))
+
+    return render_template("dashboard/user/member_form.html", form=form, mode="edit", target=target)
 
 @dashboard_bp.route("/user/members/<int:member_id>/delete", methods=["POST"])
 @login_required

@@ -1,0 +1,10 @@
+<!-- templates/dashboard/form_modal.html -->
+{% macro simple_field(field) %}
+  <div class="mb-3">
+    {{ field.label(class="form-label") }}
+    {{ field(class="form-control" + (" is-invalid" if field.errors else "")) }}
+    {% for err in field.errors %}
+      <div class="invalid-feedback">{{ err }}</div>
+    {% endfor %}
+  </div>
+{% endmacro %}
