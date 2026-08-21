@@ -1,7 +1,6 @@
 import os
 import sqlite3
 from flask import Flask, request, render_template, jsonify, flash, redirect, url_for
-from flask_login import current_user
 from flask_wtf import CSRFProtect
 from core.database import db
 from core.login import init_login_manager
@@ -10,8 +9,9 @@ from services.qr_service import QRService
 from services.ocr_service import OCRService
 from database.init_db import DBService
 from database.models.invoice import InvoiceRecord
-from routes.auth import auth_bp
-from routes.dashboard import dashboard_bp
+from routes.index_bp import index_bp
+from routes.auth_bp import auth_bp
+from routes.dashboard_bp import dashboard_bp
 
 # ===========================
 #       Flask App
@@ -48,6 +48,7 @@ DBService.init_db(app)
 #       Login / Auth
 # ========================
 init_login_manager(app)
+app.register_blueprint(index_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(dashboard_bp)
 # ===== ↑↑↑↑↑ Login / Auth ↑↑↑↑↑ =====
@@ -58,11 +59,13 @@ app.register_blueprint(dashboard_bp)
 # 首頁不再直接 render 任何模板（原本的 index.html 已經不在新架構的
 # templates/ 清單裡），改成依登入狀態導向到登入頁或 Dashboard。
 # 圖片上傳/OCR辨識的路由這次故意先不動，見下方說明。
-@app.route('/', methods=['GET'])
-def index():
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard.index'))
-    return redirect(url_for('auth.login'))
+# @app.route('/', methods=['GET'])
+# def index():
+#     if current_user.is_authenticated:
+#         return redirect(url_for('dashboard.index'))
+#     return redirect(url_for('auth.login'))
+
+# 藉由建立 Blueprint 來管理路由，將原本的 index.py、auth.py、dashboard.py 分開，讓程式碼更清楚。
 
 # 路由 1：負責「圖片上傳與辨識」，不負責存入資料庫
 @app.route('/', methods=['GET', 'POST'])
