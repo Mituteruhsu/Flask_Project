@@ -4,12 +4,12 @@ from flask_wtf import CSRFProtect
 from core.login import init_login_manager
 
 from database.init_db import DBService
-from database.models.invoice import InvoiceRecord
 from routes.index_bp import index_bp
 from routes.auth_bp import auth_bp
 from routes.dashboard_bp import dashboard_bp
 from routes.admin_bp import admin_bp
 from routes.user_bp import user_bp
+from routes.invoice_bp import invoice_bp
 
 # ===========================
 #       Flask App
@@ -54,6 +54,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(user_bp)
+app.register_blueprint(invoice_bp)
 # ===== ↑↑↑↑↑ Blueprints ↑↑↑↑↑ =====
 
 if __name__ == '__main__':

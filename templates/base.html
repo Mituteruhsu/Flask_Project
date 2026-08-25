@@ -17,7 +17,7 @@
 <body>
     <nav class="navbar">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('upload_view') }}">發票辨識系統</a>
+            <a class="navbar-brand" href="{{ url_for('invoice.upload_view') }}">發票辨識系統</a>
             <div class="d-flex align-items-center gap-3">
                 {% if current_user.is_authenticated %}
                     <a class="text-decoration-none" href="{{ url_for('dashboard.index') }}">
