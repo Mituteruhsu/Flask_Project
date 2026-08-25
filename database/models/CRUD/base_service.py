@@ -1,5 +1,6 @@
 # database/models/CRUD/CRUD_service.py
 from core.database import db
+from datetime import datetime
 
 class BaseService:
     def __init__(self, model):
@@ -48,3 +49,31 @@ class BaseService:
         db.session.delete(instance)
         db.session.commit()
         return True
+
+    # --- Soft Delete ---
+    def soft_delete(self, record_id):
+        """
+        軟刪除：model 必須有 is_deleted 欄位（繼承 SoftDeleteMixin）。
+        沒有的話丟出明確錯誤，避免默默失敗。
+        """
+        instance = self.get_by_id(record_id)
+        if not instance:
+            return None
+        if not hasattr(instance, "is_deleted"):
+            raise AttributeError(f"{self.model.__name__} 沒有 is_deleted 欄位，無法軟刪除")
+        instance.is_deleted = True
+        if hasattr(instance, "deleted_at"):
+            instance.deleted_at = datetime.now()
+        db.session.commit()
+        return instance
+
+    def restore(self, record_id):
+        """復原軟刪除"""
+        instance = self.get_by_id(record_id)
+        if not instance:
+            return None
+        instance.is_deleted = False
+        if hasattr(instance, "deleted_at"):
+            instance.deleted_at = None
+        db.session.commit()
+        return instance
