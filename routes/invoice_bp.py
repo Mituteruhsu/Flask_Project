@@ -1,4 +1,5 @@
 # routes/invoice_bp.py
+import os
 import sqlite3
 from flask import Blueprint, request, render_template, redirect, url_for, flash, jsonify
 
@@ -9,6 +10,12 @@ from services.qr_service import QRService
 from services.ocr_service import OCRService
 
 invoice_bp = Blueprint("invoice", __name__, url_prefix="/invoice")
+
+# 使用項目目錄下的 uploads 資料夾（解決 Windows /tmp 路徑問題）
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(PROJECT_DIR, 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # 確保資料夾存在
+DB_PATH = os.path.join(PROJECT_DIR, 'invoices.db')
 
 # 路由 1：負責「圖片上傳與辨識」，不負責存入資料庫
 @invoice_bp.route('/', methods=['GET', 'POST'])

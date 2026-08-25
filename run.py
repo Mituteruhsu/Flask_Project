@@ -1,12 +1,8 @@
 import os
-import sqlite3
 from flask import Flask
 from flask_wtf import CSRFProtect
-from core.database import db
 from core.login import init_login_manager
-from services.image_service import ImageService
-from services.qr_service import QRService
-from services.ocr_service import OCRService
+
 from database.init_db import DBService
 from database.models.invoice import InvoiceRecord
 from routes.index_bp import index_bp
