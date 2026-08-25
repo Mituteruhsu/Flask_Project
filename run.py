@@ -12,6 +12,7 @@ from database.models.invoice import InvoiceRecord
 from routes.index_bp import index_bp
 from routes.auth_bp import auth_bp
 from routes.dashboard_bp import dashboard_bp
+from routes.admin_bp import admin_bp
 
 # ===========================
 #       Flask App
@@ -50,6 +51,7 @@ DBService.init_db(app)
 init_login_manager(app)
 app.register_blueprint(index_bp)
 app.register_blueprint(auth_bp)
+app.register_blueprint(admin_bp)
 app.register_blueprint(dashboard_bp)
 # ===== ↑↑↑↑↑ Login / Auth ↑↑↑↑↑ =====
 
