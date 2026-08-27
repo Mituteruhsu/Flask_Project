@@ -8,7 +8,7 @@ from database.models.user import User
 from database.models.RBAC.role import Role
 from database.models.family.family import Family
 from database.models.subscription.plan import Plan
-from database.models.CRUD.services import UserService, FamilyService
+from database.models.CRUD.services import user_service, family_service
 from core.database import db
 from sqlalchemy import inspect, text
 
@@ -16,10 +16,6 @@ from forms.user_forms import UserForm
 from forms.family_forms import FamilyForm
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
-
-# 初始化 CRUD.Service 實例
-user_service = UserService()
-family_service = FamilyService()  # 假設你有一個 FamilyService，這裡只是示範
 
 # ==========================================================
 #  管理者 Dashboard（平台層：全部使用者 / 家庭 / 方案）

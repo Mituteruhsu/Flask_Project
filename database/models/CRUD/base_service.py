@@ -1,4 +1,4 @@
-# database/models/CRUD/CRUD_service.py
+# database/models/CRUD/base_service.py
 from core.database import db
 from datetime import datetime
 

@@ -1,41 +1,34 @@
 # routes/user_bp.py
-from datetime import datetime
 from flask import Blueprint, request, render_template, redirect, url_for, flash, abort, g
 from flask_login import login_required, current_user
 
-from core.database import db
 from forms.member_forms import FamilyMemberForm
 from forms.invoice_forms import InvoiceForm
-from database.models.user import User
 from database.models.family.family_member import FamilyMember, FamilyRole
-from database.models.invoice import InvoiceRecord
-from utils.decorators import family_member_required, family_role_required, user_has_role
-from database.models.CRUD.services import FamilyMemberService
-
+from utils.decorators import family_member_required, family_role_required
+from database.models.CRUD.services import family_member_service, invoice_service
 
 user_bp = Blueprint("user", __name__, url_prefix="/user")
-
-# 初始化 CRUD.Service 實例
-family_member_service = FamilyMemberService()
 
 # ==========================================================
 #  使用者 Dashboard（家庭層：自己的家庭 / 發票紀錄）
 # ==========================================================
+# ---------- User：Index（首頁） ----------
 @user_bp.route("/")
 @login_required
 @family_member_required
 def user_index():
+    """ 記帳主頁：完全改用 invoice_service 撈取該家庭最近 10 筆發票 """
     membership: FamilyMember = g.membership
     family = membership.family
-    recent_invoices = (
-        InvoiceRecord.query
-        .join(User, InvoiceRecord.user_id == User.id)
-        .join(FamilyMember, FamilyMember.user_id == User.id)
-        .filter(FamilyMember.family_id == family.id, InvoiceRecord.is_deleted == False)
-        .order_by(InvoiceRecord.created_at.desc())
-        .limit(10)
-        .all()
+    
+    # 💡 呼叫服務層，移除手動撰寫的原生 Join 查詢
+    recent_invoices = invoice_service.get_family_invoices(
+        family_id=family.id,
+        is_deleted=False,
+        limit=10
     )
+    
     return render_template(
         "dashboard/user/index.html",
         family=family,
@@ -43,99 +36,100 @@ def user_index():
         invoices=recent_invoices,
     )
 
-# ---------- User：Invoice Edit（獨立頁面） ----------
+# ---------- User：Invoice Edit（更新） ----------
 @user_bp.route("/invoices/<int:invoice_id>/edit", methods=["GET", "POST"])
 @login_required
 @family_member_required
 def user_edit_invoice(invoice_id):
-    membership: FamilyMember = g.membership
-    invoice = InvoiceRecord.query.get_or_404(invoice_id)
-
+    """ 編輯發票 """
+    membership: FamilyMember = g.membership    
+    # 使用 invoice_service 獲取發票
+    invoice = invoice_service.get_by_id(invoice_id)
+    if not invoice:
+        abort(404)        
     if not membership.can_edit_record(invoice):
         abort(403)
-
     form = InvoiceForm(obj=invoice)
     if form.validate_on_submit():
-        form.populate_obj(invoice)
-        db.session.commit()
+        # 將更新行為交給服務層，避免路由直接調用 db.session.commit()
+        invoice_service.update_invoice_from_form(invoice_id, form)
         flash("發票資料已更新", "success")
-        return redirect(url_for("user.user_index"))
+        return redirect(url_for("user.user_index"))        
     return render_template("dashboard/invoice_form.html", form=form, invoice=invoice)
 
+# ---------- User：Invoice Delete（軟刪除）----------
 @user_bp.route("/invoices/<int:invoice_id>/delete", methods=["POST"])
 @login_required
 @family_member_required
 def user_delete_invoice(invoice_id):
-    """軟刪除：只標記 is_deleted，不真的從資料庫移除，可從垃圾桶復原"""
+    """ 軟刪除：is_deleted 標記為已刪除，不真的從資料庫移除，可從垃圾桶復原 """
     membership: FamilyMember = g.membership
-    invoice = InvoiceRecord.query.get_or_404(invoice_id)
-
-    # 業務層權限判斷：直接複用 FamilyMember.can_edit_record
-    # (parent 可刪全部，child 只能刪自己的，viewer 不能刪)
+    invoice = invoice_service.get_by_id(invoice_id)
+    if not invoice:
+        abort(404)
+        
     if not membership.can_edit_record(invoice):
         abort(403)
-
-    invoice.is_deleted = True
-    invoice.deleted_at = datetime.now()
-    db.session.commit()
+        
+    # 💡 呼叫服務層執行軟刪除
+    invoice_service.soft_delete(invoice_id)
     flash("發票紀錄已移至垃圾桶", "success")
     return redirect(url_for("user.user_index"))
 
-
+# ---------- User：Invoice Trash（垃圾桶）----------
 @user_bp.route("/invoices/trash")
 @login_required
 @family_member_required
 def user_invoice_trash():
+    """ 垃圾桶列表：呼叫服務層獲取已刪除數據 """
     membership: FamilyMember = g.membership
     family = membership.family
-    deleted_invoices = (
-        InvoiceRecord.query
-        .join(User, InvoiceRecord.user_id == User.id)
-        .join(FamilyMember, FamilyMember.user_id == User.id)
-        .filter(FamilyMember.family_id == family.id, InvoiceRecord.is_deleted == True)
-        .order_by(InvoiceRecord.deleted_at.desc())
-        .all()
+    deleted_invoices = invoice_service.get_family_invoices(
+        family_id=family.id,
+        is_deleted=True
     )
+    
     return render_template(
         "dashboard/user/trash.html", invoices=deleted_invoices, membership=membership
     )
 
-
+# ---------- User：Invoice Restore（復原）----------
 @user_bp.route("/invoices/<int:invoice_id>/restore", methods=["POST"])
 @login_required
 @family_member_required
 def user_restore_invoice(invoice_id):
-    membership: FamilyMember = g.membership
-    invoice = InvoiceRecord.query.get_or_404(invoice_id)
-
+    """ 從垃圾桶還原發票 """
+    membership: FamilyMember = g.membership    
+    invoice = invoice_service.get_by_id(invoice_id)
+    if not invoice:
+        abort(404)
     if not membership.can_edit_record(invoice):
         abort(403)
-
-    invoice.is_deleted = False
-    invoice.deleted_at = None
-    db.session.commit()
+    invoice_service.restore_from_trash(invoice_id)
     flash("發票紀錄已復原", "success")
     return redirect(url_for("user.user_invoice_trash"))
 
-
+# ---------- User：Family Members（家庭成員列表）----------
 @user_bp.route("/members")
 @login_required
 @family_member_required
 def user_members():
+    """ 顯示家庭成員列表 """
     membership: FamilyMember = g.membership
-    members = FamilyMember.query.filter_by(family_id=membership.family_id).all()
+    members = family_member_service.filter_by(family_id=membership.family_id)
     return render_template(
         "dashboard/user/members.html", members=members, membership=membership
     )
 
+# --------- User：Add Member（新增家庭成員）----------
 @user_bp.route("/members/add", methods=["GET", "POST"])
 @login_required
 @family_member_required
 @family_role_required(FamilyRole.PARENT)
 def user_add_member():
+    """ 新增家庭成員 """
     membership: FamilyMember = g.membership
     form = FamilyMemberForm()
-
     if form.validate_on_submit():
         family_member_service.create(
             family_id=membership.family_id,
@@ -148,45 +142,47 @@ def user_add_member():
         return redirect(url_for("user.user_members"))
     return render_template("dashboard/user/member_form.html", form=form, mode="create")
 
+# --------- User：Edit Member（編輯家庭成員）----------
 @user_bp.route("/members/<int:member_id>/edit", methods=["GET", "POST"])
 @login_required
 @family_member_required
 @family_role_required(FamilyRole.PARENT)
 def user_edit_member(member_id):
+    """ 編輯家庭成員 """
     membership: FamilyMember = g.membership
-    target = FamilyMember.query.get_or_404(member_id)
-    if target.family_id != membership.family_id:
-        abort(403)
-
+    target = family_member_service.get_by_id(member_id)
+    if not target or target.family_id != membership.family_id:
+        abort(403)        
     form = FamilyMemberForm(obj=target)
     if request.method == "GET":
         form.family_role.data = target.family_role.value
-
     if form.validate_on_submit():
-        target.nickname = form.nickname.data
-        target.family_role = FamilyRole(form.family_role.data)
-        target.is_active = form.is_active.data
-        db.session.commit()
+        # 💡 使用 BaseService 的 update 方法，避免在路由直接給屬性賦值與 commit
+        family_member_service.update(
+            target.id,
+            nickname=form.nickname.data,
+            family_role=FamilyRole(form.family_role.data),
+            is_active=form.is_active.data
+        )
         flash("已更新成員資料", "success")
         return redirect(url_for("user.user_members"))
-
+        
     return render_template("dashboard/user/member_form.html", form=form, mode="edit", target=target)
 
+# --------- User：Delete Member（刪除家庭成員）----------
 @user_bp.route("/members/<int:member_id>/delete", methods=["POST"])
 @login_required
 @family_member_required
-@family_role_required(FamilyRole.PARENT)  # 只有家長能移除成員
+@family_role_required(FamilyRole.PARENT)
 def user_delete_member(member_id):
+    """ 移除家庭成員 """
     membership: FamilyMember = g.membership
-    target = FamilyMember.query.get_or_404(member_id)
-
-    if target.family_id != membership.family_id:
-        abort(403)  # 不能動別的家庭
+    target = family_member_service.get_by_id(member_id)
+    if not target or target.family_id != membership.family_id:
+        abort(403)  # 不能動別的家庭     
     if target.id == membership.id:
         flash("不能移除自己", "warning")
         return redirect(url_for("user.user_members"))
-
-    db.session.delete(target)
-    db.session.commit()
+    family_member_service.delete(target.id)
     flash(f"已將「{target.nickname}」移出家庭", "success")
     return redirect(url_for("user.user_members"))
