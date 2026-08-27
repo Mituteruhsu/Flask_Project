@@ -20,9 +20,11 @@ class BaseService:
         # SQLAlchemy 2.0+ 建議用法：db.session.get()
         return db.session.get(self.model, record_id)
 
-    def get_all(self):
-        """查詢所有紀錄"""
-        return db.session.scalars(db.select(self.model)).all()
+    def get_all(self, stmt=None):
+        """查詢所有紀錄，stmt 讓 services.py 可以傳入自訂的查詢條件（例如排序、過濾等）"""
+        if stmt is None:
+            stmt = db.select(self.model) # 這裡單純查詢所有紀錄，沒有條件
+        return db.session.scalars(stmt).all()
 
     def filter_by(self, **kwargs):
         """條件查詢（多筆）"""

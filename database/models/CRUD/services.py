@@ -16,9 +16,13 @@ class UserService(BaseService):
         super().__init__(User)
 
     # 如果需要特殊查詢（例如用 email 登入），再額外擴充專屬於 User 的方法
-    def get_by_email(self, email):
-        
+    def get_by_email(self, email):        
         return db.session.scalar(db.select(User).filter_by(email=email))
+
+    # 使用 BaseService 的 get_all 方法，傳入自訂的 stmt 這裡 "依照 id 升冪排序"
+    def get_all_users(self):
+        stmt = db.select(User).order_by(User.id.asc())
+        return self.get_all(stmt=stmt)  
 
 # Role 專用 Service
 class RoleService(BaseService):

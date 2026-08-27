@@ -21,8 +21,6 @@ def user_index():
     """ 記帳主頁：完全改用 invoice_service 撈取該家庭最近 10 筆發票 """
     membership: FamilyMember = g.membership
     family = membership.family
-    
-    # 💡 呼叫服務層，移除手動撰寫的原生 Join 查詢
     recent_invoices = invoice_service.get_family_invoices(
         family_id=family.id,
         is_deleted=False,

@@ -20,6 +20,7 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 # ==========================================================
 #  管理者 Dashboard（平台層：全部使用者 / 家庭 / 方案）
 # ==========================================================
+# ---------- User：Index（首頁） ----------
 @admin_bp.route("/")
 @admin_required
 def admin_index():
@@ -64,13 +65,15 @@ def admin_index():
         total_count=total_count
     )
 
+# ---------- User：管理使用者 ----------
 @admin_bp.route("/users")
 @admin_required
 def admin_users():
-    users = User.query.order_by(User.id.asc()).all()
+    users = user_service.get_all_users()
     table_names = inspect(db.engine).get_table_names()
     return render_template("dashboard/admin/users.html", users=users, table_names=table_names)
 
+# --------- User：建立使用者 ----------
 @admin_bp.route("/users/create", methods=["GET", "POST"])
 @admin_required
 def admin_create_user():
