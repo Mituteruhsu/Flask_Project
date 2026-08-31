@@ -2,6 +2,7 @@ from core.database import db
 from flask_login import UserMixin
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Integer, String
+from database.mixins import TimestampMixin, SoftDeleteMixin
 from database.models.RBAC.role import Role
 from database.models.invoice import InvoiceRecord
 from database.models.RBAC.user_roles import user_roles
@@ -10,7 +11,7 @@ from database.models.RBAC.user_roles import user_roles
 #      資料表定義
 # ====================
 # 使用者資料表
-class User(UserMixin, db.Model):
+class User(UserMixin,TimestampMixin, SoftDeleteMixin, db.Model):
     __tablename__ = 'users'
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
