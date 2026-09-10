@@ -8,7 +8,7 @@ from database.models.user import User
 from database.models.RBAC.role import Role
 from database.models.family.family import Family
 from database.models.subscription.plan import Plan
-from database.models.CRUD.services import user_service, family_service
+from database.services.CRUD.services import user_service, family_service
 from core.database import db
 from sqlalchemy import inspect, text
 

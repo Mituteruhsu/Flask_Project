@@ -1,9 +1,11 @@
 # database/models/CRUD/services.py
-from database.models.CRUD.base_service import BaseService
+from database.services.CRUD.base_service import BaseService
 from database.models.user import User
 from database.models.RBAC.role import Role
 from database.models.RBAC.permission import Permission
 from database.models.RBAC.capability import Capability
+from database.models.workspace.workspace import Workspace
+from database.models.workspace.workspace_member import WorkspaceMember
 from database.models.family.family_member import FamilyMember, FamilyRole
 from database.models.family.family import Family
 from database.models.invoice import InvoiceRecord
@@ -38,6 +40,16 @@ class PermissionService(BaseService):
 class CapabilityService(BaseService):   
     def __init__(self):
         super().__init__(Capability)
+
+# Workspace 專用 Service
+class WorkspaceService(BaseService):
+    def __init__(self):
+        super().__init__(Workspace)
+
+# WorkspaceMember 專用 Service
+class WorkspaceMemberService(BaseService):
+    def __init__(self):
+        super().__init__(WorkspaceMember)
 
 # FamilyMember 專用 Service
 class FamilyMemberService(BaseService):
@@ -100,6 +112,7 @@ class InvoiceService(BaseService):
         invoice.deleted_at = None
         db.session.commit()
         return True
+
 
 # ============================
 # 初始化 CRUD.Service 實例
