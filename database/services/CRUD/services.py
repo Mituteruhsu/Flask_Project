@@ -41,16 +41,6 @@ class CapabilityService(BaseService):
     def __init__(self):
         super().__init__(Capability)
 
-# Workspace 專用 Service
-class WorkspaceService(BaseService):
-    def __init__(self):
-        super().__init__(Workspace)
-
-# WorkspaceMember 專用 Service
-class WorkspaceMemberService(BaseService):
-    def __init__(self):
-        super().__init__(WorkspaceMember)
-
 # FamilyMember 專用 Service
 class FamilyMemberService(BaseService):
     def __init__(self):
