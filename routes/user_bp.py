@@ -16,7 +16,6 @@ user_bp = Blueprint("user", __name__, url_prefix="/user")
 # ---------- User：Index（首頁） ----------
 @user_bp.route("/")
 @login_required
-@family_member_required
 def user_index():
     """ 記帳主頁：完全改用 invoice_service 撈取該家庭最近 10 筆發票 """
     membership: FamilyMember = g.membership
@@ -37,7 +36,6 @@ def user_index():
 # ---------- User：Invoice Edit（更新） ----------
 @user_bp.route("/invoices/<int:invoice_id>/edit", methods=["GET", "POST"])
 @login_required
-@family_member_required
 def user_edit_invoice(invoice_id):
     """ 編輯發票 """
     membership: FamilyMember = g.membership    
@@ -58,7 +56,6 @@ def user_edit_invoice(invoice_id):
 # ---------- User：Invoice Delete（軟刪除）----------
 @user_bp.route("/invoices/<int:invoice_id>/delete", methods=["POST"])
 @login_required
-@family_member_required
 def user_delete_invoice(invoice_id):
     """ 軟刪除：is_deleted 標記為已刪除，不真的從資料庫移除，可從垃圾桶復原 """
     membership: FamilyMember = g.membership
@@ -77,7 +74,6 @@ def user_delete_invoice(invoice_id):
 # ---------- User：Invoice Trash（垃圾桶）----------
 @user_bp.route("/invoices/trash")
 @login_required
-@family_member_required
 def user_invoice_trash():
     """ 垃圾桶列表：呼叫服務層獲取已刪除數據 """
     membership: FamilyMember = g.membership
@@ -94,7 +90,6 @@ def user_invoice_trash():
 # ---------- User：Invoice Restore（復原）----------
 @user_bp.route("/invoices/<int:invoice_id>/restore", methods=["POST"])
 @login_required
-@family_member_required
 def user_restore_invoice(invoice_id):
     """ 從垃圾桶還原發票 """
     membership: FamilyMember = g.membership    
