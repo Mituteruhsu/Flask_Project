@@ -1,5 +1,5 @@
 # routes/index.py
-from flask import Blueprint, redirect, url_for
+from flask import Blueprint, redirect, url_for, render_template
 from flask_login import current_user
 
 index_bp = Blueprint("index", __name__, url_prefix="/")
@@ -8,4 +8,4 @@ index_bp = Blueprint("index", __name__, url_prefix="/")
 def index():
     if current_user.is_authenticated:
         return redirect(url_for("dashboard.index"))
-    return redirect(url_for("auth.login"))
+    return render_template("index.html")
