@@ -1,12 +1,10 @@
 # routes/user_bp.py
-from flask import Blueprint, request, render_template, redirect, url_for, flash, abort, g
-from flask_login import login_required, current_user
+from flask import Blueprint, render_template, redirect, url_for, flash, abort, g
+from flask_login import login_required
 
-from forms.member_forms import FamilyMemberForm
 from forms.invoice_forms import InvoiceForm
-from database.models.family.family_member import FamilyMember, FamilyRole
-from utils.decorators import family_member_required, family_role_required
-from database.services.CRUD.services import family_member_service, invoice_service
+from database.models.family.family_member import FamilyMember
+from database.services.CRUD.services import invoice_service
 
 user_bp = Blueprint("user", __name__, url_prefix="/user")
 
