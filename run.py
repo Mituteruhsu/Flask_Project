@@ -5,6 +5,7 @@ from core.login import init_login_manager
 
 from database.init_db import DBService
 from routes.index_bp import index_bp
+from routes.demo_bp import demo_bp
 from routes.auth_bp import auth_bp
 from routes.dashboard_bp import dashboard_bp
 from routes.admin_bp import admin_bp
@@ -52,6 +53,7 @@ DBService.init_db(app)
 init_login_manager(app)
 app.register_blueprint(index_bp)
 app.register_blueprint(auth_bp)
+app.register_blueprint(demo_bp)
 # 前端路由 與 API 串接
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(admin_bp)

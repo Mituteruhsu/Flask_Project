@@ -95,31 +95,42 @@
     <!-- 3. 核心功能體驗區：無門檻互動 Demo (The Sandbox Demo) -->
     <section class="demo-section" id="demo-section">
         <div class="container">
-            <div class="demo-badge text-center">🌟 無門檻免註冊試玩</div>
+            <div class="demo-badge text-center">🌟 免註冊即時體驗</div>
             <h2 class="section-title text-center">親自體驗 AI 影像辨識的黑科技</h2>
-            <p class="section-subtitle text-center">點選下方情境關卡，觀察右側 AI 如何在 2 秒內完成多張發票解析</p>
+            <p class="section-subtitle text-center">選擇預設關卡，或「直接拖放你的發票照片」進行真實 AI 辨識</p>
 
-            <!-- 步驟一：關卡切換按鈕 -->
+            <!-- 步驟一：關卡與上傳模式切換 -->
             <div class="demo-tabs">
-                <button class="tab-btn active" data-target="office"><i class="fa-solid fa-file-invoice-dollar"></i> 體驗：上班族報帳收據</button>
-                <button class="tab-btn" data-target="family"><i class="fa-solid fa-cart-shopping"></i> 體驗：家庭賣場大採購</button>
-                <button class="tab-btn" data-target="multi"><i class="fa-solid fa-receipt"></i> 體驗：多張感熱紙發票</button>
+                <button class="tab-btn active" data-target="office"><i class="fa-solid fa-file-invoice-dollar"></i> 預設：上班族報帳</button>
+                <button class="tab-btn" data-target="family"><i class="fa-solid fa-cart-shopping"></i> 預設：賣場大採購</button>
+                <button class="tab-btn" data-target="upload"><i class="fa-solid fa-cloud-arrow-up"></i> 試玩：上傳自己的發票</button>
             </div>
 
-            <!-- Demo 展示視窗 -->
+            <!-- Demo 展示階段 -->
             <div class="demo-stage">
-                <!-- 左側/上方：模擬照片與動態掃描 -->
+                <!-- 左側：影像展示區 / 上傳拖放區 -->
                 <div class="demo-viewport">
-                    <div class="demo-image-wrapper">
-                        <img id="demoImage" src="{{ url_for('static', filename='images/demo_office.jpg') }}" alt="Demo 發票" class="demo-img">
+                    <!-- 預設預覽圖片盒 -->
+                    <div class="demo-image-wrapper" id="imageWrapper">
+                        <img id="demoImage" src="{{ url_for('static', filename='images/demo_image02.jpg') }}" alt="Demo 發票" class="demo-img">
                         <div class="demo-laser-line" id="laserLine"></div>
+                    </div>
+
+                    <!-- 動態上傳拖放區 (預設隱藏) -->
+                    <div class="dropzone-box" id="dropzoneBox" style="display: none;">
+                        <input type="file" id="invoiceFileInput" accept="image/*" style="display: none;">
+                        <div class="dropzone-content" onclick="document.getElementById('invoiceFileInput').click()">
+                            <i class="fa-solid fa-file-image dropzone-icon"></i>
+                            <p>點擊或將你的發票/收據照片拖放到這裡</p>
+                            <span class="dropzone-hint">支援 JPG, PNG, WEBP 格式</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 右側/下方：即時產出結果面板 -->
+                <!-- 右側：即時產出結果面板 -->
                 <div class="demo-result-panel">
                     <div class="status-indicator">
-                        <span class="pulse-dot"></span> <span id="statusText">AI 模組就緒，請點擊關卡</span>
+                        <span class="pulse-dot"></span> <span id="statusText">AI 模組就緒，請選擇情境或上傳檔案</span>
                     </div>
 
                     <div class="result-card" id="resultCard">
@@ -131,7 +142,7 @@
                             <h4><i class="fa-solid fa-robot"></i> AI 智慧語意分類結果：</h4>
                             <ul class="category-list" id="categoryList">
                                 <li><span class="cat-tag">交通差旅</span> $1,200 (台灣高鐵)</li>
-                                <li><span class="cat-tag">文具文具</span> $480 (辦公用品、影印紙)</li>
+                                <li><span class="cat-tag">文具用品</span> $480 (辦公用紙、筆)</li>
                             </ul>
                             <div class="time-saved-badge">
                                 <i class="fa-solid fa-stopwatch"></i> 省下手動輸入時間：<strong id="timeSaved">約 3 分鐘！</strong>
@@ -139,9 +150,10 @@
                         </div>
                     </div>
 
-                    <!-- 彩蛋微文案 -->
-                    <div class="easter-egg-box">
-                        <p><i class="fa-solid fa-lightbulb"></i> 這只是預設範例，想用你口袋裡那張發票試試看嗎？點擊下方免費註冊，用手機拍一張體驗真實威力！</p>
+                    <!-- 轉化引導微文案 -->
+                    <div class="easter-egg-box" id="conversionBox">
+                        <p><i class="fa-solid fa-lightbulb"></i> 體驗滿意嗎？現在免費註冊，這筆辨識結果即可一鍵匯入你的個人帳本！</p>
+                        <a href="{{ url_for('auth.login') }}" class="btn-neon-sm" style="display: inline-block; margin-top: 8px;">免費註冊保存帳本</a>
                     </div>
                 </div>
             </div>
