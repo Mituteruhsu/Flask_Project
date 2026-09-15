@@ -42,6 +42,7 @@ class QRService:
         return None
         
     # 判斷 QR Code 的編碼方式，並進行相應的解碼
+    @staticmethod
     def recode(data):      # 判別 0 , 1 , 2 是否為 Big5, UTF-8, Base64
         print("-----From barcode.data.decode('utf-8')----- \n", data)
         y= list(filter(None, re.search("[0-9]{1}:[0-9]{1}:[0-9]{1}:", data, flags=0).group(0).split(':'))) # 正則表達找出與關鍵類似的字元
@@ -64,8 +65,9 @@ class QRService:
             return data
 
     # 將 QR Code 的資料解析成 QRCodeInfo 物件，並轉換成前端可用的字典格式
+    @staticmethod
     def reInfo(main_qr):
-        x=recode(main_qr) # 判別0,1,2 是否為utf-8, base64, big5
+        x=QRService.recode(main_qr) # 判別0,1,2 是否為utf-8, base64, big5
         recieve = x[:10]
         recieve_date = x[10:17]
         recieve_randam = x[17:21]
@@ -128,31 +130,32 @@ class QRService:
             items_price
             )
     
-    
-    # 避免 find_main_qr() 回傳 None 時，直接導致 reInfo() 報錯 
-    main_qr = find_main_qr(raw_qrs)
-    if main_qr is None:
-        return None
-    
-    info=reInfo(main_qr)
-    if info:
-        # 將 QRCodeInfo 物件的屬性，轉換成「前端直接可以拿來跑迴圈」的中文欄位字典
-        return {"發票號碼": info.recieve,
-                "開立日期": info.recieve_date,
-                "隨機碼": info.recieve_randam,
-                "銷售額": info.recieve_sale,
-                "推算總金額": info.recieve_total_sale,
-                "買方統編": info.recieve_buyer_invoice_num,
-                "賣方統編": info.recieve_seller_invoice_num,
-                "AES加密": info.recieve_AESencode,
-                "77個字元後的資料": info.after77,
-                "營業人使用區": info.recieve_free_usage,
-                "品項筆數": info.recieve_Item,
-                "品項總筆數": info.recieve_totle_Item,
-                "編碼類型": info.codetype,
-                "品項明細": info.items,
-                "品項數量": info.item_quantity,
-                "品項單價": info.items_price,
-                "辨識方法": "QR Code",
-                }
+raw_qrs = QRService.decode_qrcode(img)
+
+# 避免 find_main_qr() 回傳 None 時，直接導致 reInfo() 報錯 
+main_qr = QRService.find_main_qr(raw_qrs)
+if main_qr is None:
     return None
+    
+info=QRService.reInfo(main_qr)
+if info:
+    # 將 QRCodeInfo 物件的屬性，轉換成「前端直接可以拿來跑迴圈」的中文欄位字典
+    return {"發票號碼": info.recieve,
+            "開立日期": info.recieve_date,
+            "隨機碼": info.recieve_randam,
+            "銷售額": info.recieve_sale,
+            "推算總金額": info.recieve_total_sale,
+            "買方統編": info.recieve_buyer_invoice_num,
+            "賣方統編": info.recieve_seller_invoice_num,
+            "AES加密": info.recieve_AESencode,
+            "77個字元後的資料": info.after77,
+            "營業人使用區": info.recieve_free_usage,
+            "品項筆數": info.recieve_Item,
+            "品項總筆數": info.recieve_totle_Item,
+            "編碼類型": info.codetype,
+            "品項明細": info.items,
+            "品項數量": info.item_quantity,
+            "品項單價": info.items_price,
+            "辨識方法": "QR Code",
+            }
+return None

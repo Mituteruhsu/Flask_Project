@@ -1,7 +1,7 @@
 # routes/demo_bp.py
 from flask import Blueprint, request, jsonify
 from services.ocr_service import OCRService
-from services.ai_parser import AIParserService
+from services.ai_parser_service import AIParserService
 
 demo_bp = Blueprint("demo", __name__, url_prefix="/api/demo")
 

@@ -29,7 +29,7 @@ def upload_invoice():
         processed_image = ImageService.preprocess_image(img_file)
 
         # 1. 嘗試 QR Code 辨識
-        final_data = QRService.parse_taiwan_qrcode(processed_image)
+        final_data = QRService.decode_qrcode(processed_image)
 
         # 2. 若失敗，啟動 AI-OCR 辨識
         if not final_data:
