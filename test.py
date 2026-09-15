@@ -5,8 +5,8 @@ from rapidocr import RapidOCR
 
 # 1. 自動取得目前程式所在的路徑，並指定本地端模型路徑
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DET_MODEL = os.path.join(BASE_DIR, 'models', 'ch_PP-OCRv4_det_infer.onnx')
-REC_MODEL = os.path.join(BASE_DIR, 'models', 'ch_PP-OCRv4_rec_infer.onnx')
+DET_MODEL = os.path.join(BASE_DIR, 'models_OCR_onnx', 'ch_PP-OCRv4_det_infer.onnx')
+REC_MODEL = os.path.join(BASE_DIR, 'models_OCR_onnx', 'ch_PP-OCRv4_rec_infer.onnx')
 
 # DET_MODEL & REC_MODEL：組裝出本地端模型檔案的正確位置。
 # det 代表 Detection（文字定位模型）：負責在圖片中找出「哪裡有文字」，並把位置圈出來。
@@ -50,6 +50,9 @@ except Exception as e:
 print("--- 開始進行 AI 文字辨識 ---")
 # return_word_box=True 非必要，True 時會
 result = engine(img, return_word_box=True)
+
+texts = list(getattr(result, "txts", ()) or ())
+scores = list(getattr(result, "scores", ()) or ())
 
 # engine(img) 回傳值為 RapidOCROutput 這裡 = result，可透過 result.xxxx 直接存取。
 # result 中預設內容包含

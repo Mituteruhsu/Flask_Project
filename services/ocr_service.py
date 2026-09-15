@@ -48,18 +48,18 @@ class OCRService:
         else:
             return jsonify({"error": "圖片損壞"})
 
-    @classmethod
-    def advanced_invoice_corrector(cls, ocr_results):
-        """ 轉換並推算發票資料的演算法 """
-        if not ocr_results: 
-            return {"發票號碼": "未偵測到", "推算總金額": "未偵測到", "辨識方法": "AI-OCR"}
+    # @classmethod
+    # def advanced_invoice_corrector(cls, ocr_results):
+    #     """ 轉換並推算發票資料的演算法 """
+    #     if not ocr_results: 
+    #         return {"發票號碼": "未偵測到", "推算總金額": "未偵測到", "辨識方法": "AI-OCR"}
         
-        full_text = "".join([t[1].upper().replace('O', '0').replace('I', '1') for t in ocr_results])
-        num_match = re.search(r'([A-Z]{2})[- ]?(\d{8})', full_text)
-        invoice_number = f"{num_match.group(1)}-{num_match.group(2)}" if num_match else "未偵測到"
+    #     full_text = "".join([t[1].upper().replace('O', '0').replace('I', '1') for t in ocr_results])
+    #     num_match = re.search(r'([A-Z]{2})[- ]?(\d{8})', full_text)
+    #     invoice_number = f"{num_match.group(1)}-{num_match.group(2)}" if num_match else "未偵測到"
         
-        # 簡單模擬金額抓取
-        all_numbers = [int(s) for s in re.findall(r'\d+', full_text) if 1 <= len(s) <= 5]
-        total_amount = f"NT$ {max(all_numbers)}" if all_numbers else "未偵測到"
+    #     # 簡單模擬金額抓取
+    #     all_numbers = [int(s) for s in re.findall(r'\d+', full_text) if 1 <= len(s) <= 5]
+    #     total_amount = f"NT$ {max(all_numbers)}" if all_numbers else "未偵測到"
         
-        return {"發票號碼": invoice_number, "推算總金額": total_amount, "辨識方法": "AI-OCR"}
+    #     return {"發票號碼": invoice_number, "推算總金額": total_amount, "辨識方法": "AI-OCR"}

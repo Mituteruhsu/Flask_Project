@@ -1,155 +1,277 @@
-# services/ai_parser.py
+# services/ai_parser_service.py
 import re
-import base64
-from services.qr_service import QRService
-from typing import List, Dict, Any, Optional
 
 class AIParserService:
     """
-    AI 發票與收據資料解析服務
-    負責將 QRCode / OCR 文字清單轉換為結構化 JSON 資料
+    AI / Parser Service
+
+    責任：
+    1. QR / OCR 統一格式
+    2. 文件大分類
+    3. 發票欄位解析
+    4. 商品/消費細分類
     """
-    def __init__(self, api_key: Optional[str] = None):
-        """
-        可傳入 API Key 以支援線上 LLM（如 Gemini/OpenAI），
-        未傳入時預設使用高效能本地正則與語意推導引擎
-        """
-        self.api_key = api_key
 
-# ------------------------------------------------------------------------
+    # ======================================================
+    # 第一層：文件分類
+    # ======================================================
 
+    @classmethod
+    def classify_document(cls, data):
+        """
+        第一層分類。
 
-# -------------------------------------------------------------------------------
-    def parse_receipt_text(self, text_lines: List[str]) -> Dict[str, Any]:
+        QR 已符合台灣電子發票格式：
+            invoice
+
+        OCR：
+            依文字判斷 invoice / receipt / unknown
         """
-        核心解析入口：接收 raw text_lines，傳回結構化發票欄位
+
+        if not data:
+            return "unknown"
+
+        method = data.get("辨識方法")
+
+        if method == "QR Code":
+            return "invoice"
+
+        text = data.get("text", "")
+
+        if cls._is_invoice_text(text):
+            return "invoice"
+
+        if cls._is_receipt_text(text):
+            return "receipt"
+
+        return "unknown"
+
+    @staticmethod
+    def _is_invoice_text(text):
+        patterns = [
+            r"[A-Z]{2}[- ]?\d{8}",
+            r"發票",
+            r"統一發票",
+            r"隨機碼",
+        ]
+
+        return any(re.search(p, text, re.I) for p in patterns)
+
+    @staticmethod
+    def _is_receipt_text(text):
+        patterns = [
+            r"收據",
+            r"receipt",
+            r"小計",
+            r"合計",
+        ]
+
+        return any(re.search(p, text, re.I) for p in patterns)
+
+    # ======================================================
+    # 第二層：統一資料解析
+    # ======================================================
+
+    @classmethod
+    def parse(cls, data):
         """
-        if not text_lines:
+        QR / OCR 統一入口。
+        """
+
+        if not data:
             return {
-                "store_name": "未知店家",
-                "invoice_number": "",
-                "total_amount": 0.0,
-                "items": [],
-                "suggested_category": "未分類"
+                "文件類型": "unknown",
+                "分類": "OTHER",
+                "細分類": "UNKNOWN",
+                "辨識方法": "NONE",
             }
 
-        # 1. 解析發票號碼 (例如: AB-12345678)
-        invoice_number = self._extract_invoice_number(text_lines)
+        document_type = cls.classify_document(data)
 
-        # 2. 解析店家名稱
-        store_name = self._extract_store_name(text_lines)
+        # QR 已經由 QRService 按台灣規則解析完畢
+        if data.get("辨識方法") == "QR Code":
+            result = dict(data)
 
-        # 3. 解析總金額
-        total_amount = self._extract_total_amount(text_lines)
+        else:
+            result = cls._parse_ocr(data)
 
-        # 4. 解析消費明細項目
-        items = self._extract_items(text_lines)
+        result["文件類型"] = document_type
 
-        # 5. 智慧推論消費分類
-        suggested_category = self._infer_category(store_name, items, text_lines)
+        # ==================================================
+        # 第三層：細分類
+        # ==================================================
+        result.update(
+            cls.classify_detail(result)
+        )
+
+        return result
+
+    # ======================================================
+    # OCR → 統一發票資料
+    # ======================================================
+
+    @classmethod
+    def _parse_ocr(cls, data):
+        text = data.get("text", "")
+
+        invoice_number = cls._parse_invoice_number(text)
+        total_amount = cls._parse_amount(text)
 
         return {
-            "store_name": store_name,
-            "invoice_number": invoice_number,
-            "total_amount": total_amount,
-            "items": items,
-            "suggested_category": suggested_category
+            "發票號碼": invoice_number,
+            "開立日期": cls._parse_date(text),
+            "推算總金額": total_amount,
+            "OCR文字": text,
+            "辨識方法": "AI-OCR",
         }
 
-    def _extract_invoice_number(self, text_lines: List[str]) -> str:
-        """抽取台灣電子發票號碼格式 (兩位大寫英文字母 + 8位數字)"""
-        pattern = r'[A-Z]{2}[-\s]?\d{8}'
-        for line in text_lines:
-            match = re.search(pattern, line)
-            if match:
-                return match.group(0).replace('-', '').replace(' ', '')
-        return ""
+    @staticmethod
+    def _parse_invoice_number(text):
+        match = re.search(
+            r"([A-Z]{2})[- ]?(\d{8})",
+            text.upper()
+        )
 
-    def _extract_store_name(self, text_lines: List[str]) -> str:
-        """從文字前段過濾無關標籤，萃取店家名稱"""
-        ignore_keywords = [
-            "統一發票", "電子發票", "存根聯", "收執聯", 
-            "營業人", "統一編號", "歡迎光臨", "發票號碼"
+        if not match:
+            return "未偵測到"
+
+        return f"{match.group(1)}-{match.group(2)}"
+
+    @staticmethod
+    def _parse_date(text):
+        patterns = [
+            r"(?:民國)?(\d{2,3})[./年-](\d{1,2})[./月-](\d{1,2})",
+            r"(\d{3})(\d{2})(\d{2})",
         ]
-        
-        for line in text_lines[:5]:
-            clean_line = line.strip()
-            # 排除包含忽略關鍵字或純數字/日期的行
-            if clean_line and not any(kw in clean_line for kw in ignore_keywords):
-                # 剔除符號與數字後檢查長度
-                filtered_name = re.sub(r'[\d\-\:\.\*\s]', '', clean_line)
-                if len(filtered_name) >= 2:
-                    return filtered_name
-                    
-        return "便利商店 / 零售賣場"
 
-    def _extract_total_amount(self, text_lines: List[str]) -> float:
-        """多重策略匹配總金額"""
-        # 策略 1: 尋找明確的金額關鍵字標籤
-        keyword_patterns = [
-            r'(?:總計|總金額|小計|合計|TOTAL|Amount)[\s\:\=]*[\$NT\$]*\s*([\d\,]+)',
-            r'[\$NT\$]\s*([\d\,]+)'
-        ]
-        
-        for line in text_lines:
-            for pattern in keyword_patterns:
-                match = re.search(pattern, line, re.IGNORECASE)
-                if match:
-                    raw_num = match.group(1).replace(',', '')
-                    try:
-                        val = float(raw_num)
-                        if val > 0:
-                            return val
-                    except ValueError:
-                        continue
+        for pattern in patterns:
+            match = re.search(pattern, text)
 
-        # 策略 2: 從所有數字中篩選出最可能是總金額的數值（排除統編與發票號碼數字）
-        candidate_numbers = []
-        for line in text_lines:
-            # 跳過含有統編、日期等特徵的行
-            if any(k in line for k in ["統編", "日期", "時間", "機號"]):
-                continue
-            matches = re.findall(r'\b\d{1,6}\b', line)
-            for m in matches:
-                val = float(m)
-                if 1 <= val <= 200000:
-                    candidate_numbers.append(val)
-
-        return max(candidate_numbers) if candidate_numbers else 0.0
-
-    def _extract_items(self, text_lines: List[str]) -> List[Dict[str, Any]]:
-        """萃取消費明細品項與單價"""
-        items = []
-        exclude_words = ["總計", "找零", "現金", "信用卡", "統一編號", "小計", "找款", "應付"]
-
-        for line in text_lines:
-            clean_line = line.strip()
-            if any(w in clean_line for w in exclude_words):
-                continue
-
-            # 匹配格式：文字品名 + 數量/金額 (例如: "鮮乳 90" 或 "美式咖啡 x1 55")
-            match = re.search(r'^([^\d]+?)\s+(?:x?\d+\s+)?[\$]?(\d+)$', clean_line)
             if match:
-                name = match.group(1).strip()
-                price = float(match.group(2))
-                if len(name) >= 2 and price > 0:
-                    items.append({"name": name, "price": price})
+                return "".join(match.groups())
 
-        return items
+        return "未偵測到"
 
-    def _infer_category(self, store_name: str, items: List[Dict[str, Any]], text_lines: List[str]) -> str:
-        """根據店家名稱與明細進行語意自動歸類"""
-        full_text = f"{store_name} " + " ".join([i["name"] for i in items]) + " " + " ".join(text_lines)
+    @staticmethod
+    def _parse_amount(text):
+        numbers = re.findall(
+            r"\d+(?:\.\d+)?",
+            text.replace(",", "")
+        )
 
-        category_rules = {
-            "餐飲伙食": ["餐", "便當", "麵", "飯", "咖啡", "鮮乳", "牛奶", "飲料", "麥當勞", "肯德基", "星巴克", "早餐"],
-            "日用雜項": ["衛生紙", "洗髮精", "牙膏", "清潔劑", "全聯", "家樂福", "好市多", "屈臣氏", "康是美"],
-            "交通差旅": ["高鐵", "台鐵", "捷運", "加油", "中油", "停車", "計程車", "Uber", "和運"],
-            "文具娛樂": ["書", "筆", "影印", "電影", "遊戲", "誠品", "文具"]
+        values = [
+            float(value)
+            for value in numbers
+            if float(value) > 0
+        ]
+
+        if not values:
+            return "未偵測到"
+
+        return str(int(max(values)))
+
+    # ======================================================
+    # 消費分類
+    # ======================================================
+
+    @classmethod
+    def classify_detail(cls, data):
+        """
+        第二階段細分類。
+
+        QRService 不做這件事情。
+        """
+
+        text = " ".join([
+            str(data.get("品項明細", "")),
+            str(data.get("OCR文字", "")),
+        ]).lower()
+
+        category = cls._classify_category(text)
+
+        return {
+            "分類": category,
+            "細分類": cls._classify_subcategory(text, category),
         }
 
-        for category, keywords in category_rules.items():
-            if any(kw in full_text for kw in keywords):
+    @staticmethod
+    def _classify_category(text):
+
+        rules = {
+            "FOOD": [
+                "食品", "餐", "便當", "飲料",
+                "咖啡", "麵", "飯", "水果",
+                "food", "restaurant",
+            ],
+            "CLOTHING": [
+                "衣", "褲", "鞋", "服飾",
+                "clothing", "shoes",
+            ],
+            "MEDICAL": [
+                "藥", "醫院", "診所", "醫療",
+                "medical", "pharmacy",
+            ],
+            "HOUSING": [
+                "房租", "租金", "水費", "電費",
+                "瓦斯", "housing",
+            ],
+            "HOUSEHOLD_GOODS": [
+                "日用品", "清潔", "衛生紙",
+                "家具", "家用品",
+            ],
+            "TRANSPORT": [
+                "加油", "停車", "捷運", "高鐵",
+                "火車", "計程車", "transport",
+            ],
+            "EDUCATION": [
+                "學費", "書籍", "教材", "教育",
+                "education",
+            ],
+            "ENTERTAINMENT": [
+                "電影", "遊戲", "娛樂", "ktv",
+                "entertainment",
+            ],
+            "FINANCE": [
+                "銀行", "保險", "利息", "金融",
+                "finance",
+            ],
+        }
+
+        for category, keywords in rules.items():
+            if any(keyword.lower() in text for keyword in keywords):
                 return category
 
-        return "日常消費"
+        return "OTHER"
+
+    @staticmethod
+    def _classify_subcategory(text, category):
+
+        subcategories = {
+            "FOOD": {
+                "咖啡": "COFFEE",
+                "飲料": "DRINK",
+                "便當": "MEAL",
+                "餐": "RESTAURANT",
+            },
+            "TRANSPORT": {
+                "加油": "FUEL",
+                "停車": "PARKING",
+                "捷運": "METRO",
+                "高鐵": "HSR",
+            },
+            "MEDICAL": {
+                "藥": "MEDICINE",
+                "醫院": "HOSPITAL",
+                "診所": "CLINIC",
+            },
+        }
+
+        for keyword, subcategory in subcategories.get(
+            category,
+            {}
+        ).items():
+
+            if keyword.lower() in text:
+                return subcategory
+
+        return "OTHER"

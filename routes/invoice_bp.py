@@ -1,6 +1,7 @@
 # routes/invoice_bp.py
 import os
 import sqlite3
+from flask_login import login_required
 from flask import Blueprint, request, render_template, redirect, url_for, flash, jsonify
 
 from core.database import db
@@ -8,6 +9,7 @@ from database.models.invoice import InvoiceRecord
 from services.image_service import ImageService
 from services.qr_service import QRService
 from services.ocr_service import OCRService
+from services.invoice_service import InvoiceService
 
 invoice_bp = Blueprint("invoice", __name__, url_prefix="/invoice")
 
@@ -19,26 +21,36 @@ DB_PATH = os.path.join(PROJECT_DIR, 'invoices.db')
 
 # 路由 1：負責「圖片上傳與辨識」，不負責存入資料庫
 @invoice_bp.route('/', methods=['GET', 'POST'])
-def upload_invoice():
+def index():
+    return render_template('index.html')
+
+@invoice_bp.route('/scan', methods=['POST'])
+@login_required
+def scan():
     if request.method == 'POST':
         img_file = request.files.get('file')
         if not img_file or img_file.filename == '':
-            return jsonify({"error": "未選擇圖片"})
+            return jsonify({
+            "success": False,
+            "message": "未選擇圖片"
+        }), 400
 
-        # 先將圖片預處理，嘗試 QR Code 辨識
-        processed_image = ImageService.preprocess_image(img_file)
+        try:
+            result = InvoiceService.recognize(img_file)
+            return jsonify(result)
 
-        # 1. 嘗試 QR Code 辨識
-        final_data = QRService.decode_qrcode(processed_image)
-
-        # 2. 若失敗，啟動 AI-OCR 辨識
-        if not final_data:
-            print("❌ QR Code 辨識失敗，啟動 AI-OCR 辨識")
-            final_data = OCRService.ocr_process(processed_image)
-
-        return jsonify(final_data)
-
-    return render_template('index.html')
+        except ValueError as e:
+            return jsonify({
+                "success": False,
+                "message": str(e)
+            }), 400
+        
+        except Exception as e:
+            print(f"❌ 發票辨識失敗: {e}")
+            return jsonify({
+                "success": False,
+                "message": "發票辨識失敗，請稍後再試"
+            }), 500
 
 # 路由 2（新增）：前端確認無誤後，按下確認儲存，發送 POST 請求到這裡
 @invoice_bp.route('/api/save_invoice', methods=['POST'])

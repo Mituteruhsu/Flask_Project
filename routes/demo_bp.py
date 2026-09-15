@@ -1,59 +1,111 @@
 # routes/demo_bp.py
-from flask import Blueprint, request, jsonify
-from services.ocr_service import OCRService
-from services.ai_parser_service import AIParserService
+from flask import Blueprint, request, jsonify, session
+from services.invoice_service import InvoiceService
 
-demo_bp = Blueprint("demo", __name__, url_prefix="/api/demo")
 
-# 初始化服務實例
-ocr_service = OCRService()
-ai_parser_service = AIParserService()
+demo_bp = Blueprint("demo", __name__, url_prefix="/demo")
 
+# ======================================================
+# Demo 限制
+# ======================================================
+
+MAX_DEMO_SCANS = 3
+MAX_FILE_SIZE = 10 * 1024 * 1024
+
+
+def _demo_limit():
+    """限制同一個 Session 的 Demo 次數。"""
+
+    count = session.get("demo_scan_count", 0)
+
+    if count >= MAX_DEMO_SCANS:
+        return False
+
+    session["demo_scan_count"] = count + 1
+    return True
+
+
+def _validate_file(file):
+    """基本 Demo 檔案驗證。"""
+
+    if not file or not file.filename:
+        return False, "未選擇圖片"
+
+    content_length = request.content_length or 0
+
+    if content_length > MAX_FILE_SIZE:
+        return False, "圖片不可超過 10MB"
+
+    allowed = {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+    }
+
+    filename = file.filename.lower()
+
+    if not any(filename.endswith(ext) for ext in allowed):
+        return False, "只允許 JPG、PNG、WEBP"
+
+    return True, None
+
+
+# ======================================================
+# Demo Page
+# ======================================================
+
+@demo_bp.route("/", methods=["GET"])
+def index():
+    return jsonify({
+        "demo": True,
+        "remaining": max(
+            0,
+            MAX_DEMO_SCANS - session.get("demo_scan_count", 0)
+        )
+    })
+
+
+# ======================================================
+# Demo Scan
+# ======================================================
 
 @demo_bp.route("/scan", methods=["POST"])
-def demo_scan_invoice():
-    """
-    公開沙盒體驗 API (無需登入權限)
-    接收使用者上傳圖片 -> 執行 OCR -> 執行 AIParser -> 回傳結構化資料 (不儲存至 DB)
-    """
-    if "file" not in request.files:
-        return jsonify({
-            "success": False, 
-            "message": "請選擇發票或收據圖片檔案"
-        }), 400
+def scan():
 
-    file = request.files["file"]
-    image_bytes = file.read()
-
-    if not image_bytes:
+    if not _demo_limit():
         return jsonify({
-            "success": False, 
-            "message": "上傳的檔案內容為空白"
+            "success": False,
+            "message": "Demo 次數已用完，請登入後繼續使用"
+        }), 429
+
+    file = request.files.get("file")
+
+    valid, message = _validate_file(file)
+
+    if not valid:
+        return jsonify({
+            "success": False,
+            "message": message
         }), 400
 
     try:
-        # 1. 執行 OCR 文字檢測與辨識 (呼叫既有 OCR 服務)
-        ocr_result = ocr_service.run_ocr(image_bytes)
-        raw_text_lines = ocr_result.get("text_lines", [])
+        result = InvoiceService.recognize(file)
 
-        # 2. 呼叫剛實作完成的 AIParserService 進行語意結構化
-        parsed_data = ai_parser_service.parse_receipt_text(raw_text_lines)
+        # Demo 絕對不回傳資料庫資訊
+        result.pop("id", None)
+        result.pop("user_id", None)
+        result.pop("workspace_id", None)
 
-        # 3. 回傳前端 JSON 結果
-        return jsonify({
-            "success": True,
-            "data": {
-                "store_name": parsed_data["store_name"],
-                "invoice_number": parsed_data["invoice_number"],
-                "total_amount": parsed_data["total_amount"],
-                "items": parsed_data["items"],
-                "category": parsed_data["suggested_category"],
-                "time_saved_seconds": 180
-            }
-        })
+        result["demo"] = True
+        result["儲存"] = False
 
-    except Exception as e:
+        return jsonify(result)
+
+    except Exception as exc:
+        print(f"Demo Error: {exc}")
+
         return jsonify({
             "success": False,
-            "message": f"影像辨識處理失敗: {str(e)}"
+            "message": "Demo 辨識失敗"
         }), 500
