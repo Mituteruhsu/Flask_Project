@@ -5,7 +5,6 @@ from models.data_models.qr_model import QRCodeInfo
 class QRService:
     @staticmethod
     def decode_qrcode(img):
-        # print(f"test the parse_taiwan_qrcode \n{uploaded_image}")
         # 使用 pyzbar 進行解碼
         barcodes = decode(img)
 
@@ -24,6 +23,7 @@ class QRService:
         #     print(f"型態: {barcode_type}\n內容: {barcode_data}\n頂點座標: {barcode_points}\n矩形座標: {barcode_rect}\n方向: {barcode_orientation}\n品質: {barcode_quality}")
 
         # 先使用 UTF-8 嘗試解碼所有 QR Code，並過濾掉太短的資料
+        # ----- 1. QR Code 原始資料-----
         raw_qrs = []    
         for obj in barcodes:
             try:
@@ -35,46 +35,68 @@ class QRService:
                 continue
         print(f"services/qr_service.py QRService.decode() - 解出 {len(raw_qrs)} QR codes")
         print(f"decoded QR codes:\n{raw_qrs}")
-        
-        # 過濾出符合電子發票格式的 QR Code
-        def find_main_qr(raw_qrs):
-            """
-            從多個 QR Code 中找出電子發票主資料 QR
 
-            判斷條件：
-            - 長度 >= 77
-            - 包含電子發票格式
-            """
-            for qr in raw_qrs:
-                if len(qr) >= 77 and re.match(r'^[A-Z]{2}\d{8}', qr):
-                    return qr.rstrip()  # 去除可能的換行符號
-            print("❌ 未偵測到符合電子發票格式的 QR Code")
+        # ----- 2. 找出台灣發票主要 QR Code -----
+        # 避免 find_main_qr() 回傳 None 時，直接導致 reInfo() 報錯 
+        main_qr = QRService.find_main_qr(raw_qrs)
+        if main_qr is None:
             return None
-        
-        # 判斷 QR Code 的編碼方式，並進行相應的解碼
-        def recode(x):      # 判別 0 , 1 , 2 是否為 Big5, UTF-8, Base64
-            print("-----From barcode.data.decode('utf-8')----- \n", x)
-            y= list(filter(None, re.search("[0-9]{1}:[0-9]{1}:[0-9]{1}:", x, flags=0).group(0).split(':'))) # 正則表達找出與關鍵類似的字元
-            y= int(y[2])
-            if y == 0:
-                try:
-                    print('-----big5 decoded!!-----')
-                    x=x.encode('shift-jis').decode('big5')
-                    print(x)
-                    return x
-                except:
-                    print('not decodeable')
-                finally:
-                    return x
-            elif y == 1:
-                print('-----utf-8 decoded!!-----')
-                return x
-            elif y == 2:
-                print('undefinde decode: base64') 
 
+        # ----- 3. 使用既有的台灣發票規則 -----
+        info = QRService.reInfo(main_qr)
+        if not info:
+            return None
+
+        return QRService.to_dict(info)  # 將 QRCodeInfo 物件轉換成前端可用的字典格式
+
+    @staticmethod
+    def find_main_qr(raw_qrs):
+        # 過濾出符合電子發票格式的 QR Code
+        """
+        從多個 QR Code 中找出電子發票主資料 QR
+
+        判斷條件：
+        - 長度 >= 77
+        - 包含電子發票格式
+        """
+        for qr in raw_qrs:
+            if len(qr) >= 77 and re.match(r'^[A-Z]{2}\d{8}', qr):
+                return qr.rstrip()  # 去除可能的換行符號
+        print("❌ 未偵測到符合電子發票格式的 QR Code")
+        return None
+
+    # ==========================
+    # 判斷 QR Code 的編碼方式，並進行相應的解碼
+    # ==========================
+    @staticmethod
+    def recode(x):      # 判別 0 , 1 , 2 是否為 Big5, UTF-8, Base64
+        print("-----From barcode.data.decode('utf-8')----- \n", x)
+        y= list(filter(None, re.search("[0-9]{1}:[0-9]{1}:[0-9]{1}:", x, flags=0).group(0).split(':'))) # 正則表達找出與關鍵類似的字元
+        y= int(y[2])
+        if y == 0:
+            try:
+                print('-----big5 decoded!!-----')
+                x=x.encode('shift-jis').decode('big5')
+                print(x)
+                return x
+            except:
+                print('not decodeable')
+            finally:
+                return x
+        elif y == 1:
+            print('-----utf-8 decoded!!-----')
+            return x
+        elif y == 2:
+            print('undefined decode: base64')
+            return x
+
+        # ==========================
         # 將 QR Code 的資料解析成 QRCodeInfo 物件，並轉換成前端可用的字典格式
+        # ==========================
+        @staticmethod
         def reInfo(main_qr):
-            x=recode(main_qr) # 判別0,1,2 是否為utf-8, base64, big5
+            # 台灣發票 QR Code 的固定格式解析
+            x=QRService.recode(main_qr) # 判別0,1,2 是否為utf-8, base64, big5
             recieve = x[:10]
             recieve_date = x[10:17]
             recieve_randam = x[17:21]
@@ -136,15 +158,12 @@ class QRService:
                 item_quantity,
                 items_price
                 )
-        
-        
-        # 避免 find_main_qr() 回傳 None 時，直接導致 reInfo() 報錯 
-        main_qr = find_main_qr(raw_qrs)
-        if main_qr is None:
-            return None
-        
-        info=reInfo(main_qr)
-        if info:
+
+        # ==========================
+        # QRCodeInfo → API Data
+        # ==========================
+        @staticmethod
+        def to_dict(info: QRCodeInfo):
             # 將 QRCodeInfo 物件的屬性，轉換成「前端直接可以拿來跑迴圈」的中文欄位字典
             return {"發票號碼": info.recieve,
                     "開立日期": info.recieve_date,
@@ -164,4 +183,3 @@ class QRService:
                     "品項單價": info.items_price,
                     "辨識方法": "QR Code",
                     }
-        return None
