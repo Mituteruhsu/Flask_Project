@@ -108,49 +108,111 @@
 
             <!-- Demo 展示階段 -->
             <div class="demo-stage">
-                <!-- 左側：影像展示區 / 上傳拖放區 -->
+                <!-- 左側：圖片 / 上傳 -->
                 <div class="demo-viewport">
-                    <!-- 預設預覽圖片盒 -->
+                    <!-- 圖片預覽 -->
                     <div class="demo-image-wrapper" id="imageWrapper">
                         <img id="demoImage" src="{{ url_for('static', filename='images/demo_image02.jpg') }}" alt="Demo 發票" class="demo-img">
-                        <div class="demo-laser-line" id="laserLine"></div>
+                        <div class="demo-laser-line" id="laserLine" style="display:none;"></div>
                     </div>
-
-                    <!-- 動態上傳拖放區 (預設隱藏) -->
-                    <div class="dropzone-box" id="dropzoneBox" style="display: none;">
-                        <input type="file" id="invoiceFileInput" accept="image/*" style="display: none;">
-                        <div class="dropzone-content" onclick="document.getElementById('invoiceFileInput').click()">
-                            <i class="fa-solid fa-file-image dropzone-icon"></i>
-                            <p>點擊或將你的發票/收據照片拖放到這裡</p>
-                            <span class="dropzone-hint">支援 JPG, PNG, WEBP 格式</span>
+                    <!-- 上傳區 -->
+                    <div class="dropzone-box" id="dropzoneBox" style="display:none;">
+                        <input type="file" id="invoiceFileInput" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" hidden>
+                        <div class="dropzone-content">
+                            <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
+                            <p>點擊選擇或將發票 / 收據拖放到這裡</p>
+                            <span class="dropzone-hint">支援 JPG、PNG、WEBP，最大 10MB</span>
+                            <button type="button" id="selectFileBtn" class="btn-neon-sm">選擇圖片</button>
                         </div>
+                    </div>
+                    <!-- 上傳後圖片重新選擇 -->
+                    <div class="upload-actions" id="uploadActions" style="display:none;">
+                        <button type="button" id="changeFileBtn" class="btn-outline-light">重新選擇圖片</button>
                     </div>
                 </div>
-
-                <!-- 右側：即時產出結果面板 -->
+                <!-- 右側：辨識結果 -->
                 <div class="demo-result-panel">
+                    <!-- 狀態 -->
                     <div class="status-indicator">
-                        <span class="pulse-dot"></span> <span id="statusText">AI 模組就緒，請選擇情境或上傳檔案</span>
+                        <span class="pulse-dot"></span>
+                        <span id="statusText">AI 模組就緒，請選擇情境或上傳檔案</span>
                     </div>
-
+                    <!-- 結果 -->
                     <div class="result-card" id="resultCard">
                         <div class="result-header">
-                            <h3 id="resultTitle">成功辨識 2 張收據！</h3>
-                            <div class="total-amount">總金額：<span id="resultAmount">$1,680</span></div>
+                            <h3 id="resultTitle">等待辨識</h3>
+                            <div class="total-amount">總金額：<span id="resultAmount">$0</span></div>
                         </div>
                         <div class="result-body">
-                            <h4><i class="fa-solid fa-robot"></i> AI 智慧語意分類結果：</h4>
+                            <!-- 發票基本資料 -->
+                            <div class="invoice-info">
+                                <div class="invoice-field">
+                                    <span>發票號碼</span>
+                                    <strong id="invoiceNumber">—</strong>
+                                </div>
+
+                                <div class="invoice-field">
+                                    <span>開立日期</span>
+                                    <strong id="invoiceDate">—</strong>
+                                </div>
+
+                                <div class="invoice-field">
+                                    <span>隨機碼</span>
+                                    <strong id="invoiceRandom">—</strong>
+                                </div>
+
+                                <div class="invoice-field">
+                                    <span>賣方統編</span>
+                                    <strong id="sellerId">—</strong>
+                                </div>
+
+                                <div class="invoice-field">
+                                    <span>買方統編</span>
+                                    <strong id="buyerId">—</strong>
+                                </div>
+                            </div>
+
+                            <!-- AI 分類 -->
+                            <h4><i class="fa-solid fa-robot"></i>AI 智慧語意分類結果</h4>
                             <ul class="category-list" id="categoryList">
-                                <li><span class="cat-tag">交通差旅</span> $1,200 (台灣高鐵)</li>
-                                <li><span class="cat-tag">文具用品</span> $480 (辦公用紙、筆)</li>
+                                <li class="empty-result">尚未取得分類結果</li>
                             </ul>
+                            <!-- 品項 -->
+                            <h4><i class="fa-solid fa-list"></i>發票品項</h4>
+                            <div class="items-result" id="itemsResult">
+                                <div class="empty-result">尚未取得品項</div>
+                            </div>
+                            <!-- 辨識資訊 -->
+                            <div class="recognition-meta">
+                                <span>
+                                    辨識方式：
+                                    <strong id="recognitionMethod">
+                                        —
+                                    </strong>
+                                </span>
+                                <span>
+                                    編碼：
+                                    <strong id="encodingType">
+                                        —
+                                    </strong>
+                                </span>
+                                <span>
+                                    Demo 剩餘：
+                                    <strong id="remainingScans">
+                                        3
+                                    </strong>
+                                </span>
+                            </div>
+
+                            <!-- 節省時間 -->
                             <div class="time-saved-badge">
-                                <i class="fa-solid fa-stopwatch"></i> 省下手動輸入時間：<strong id="timeSaved">約 3 分鐘！</strong>
+                                <i class="fa-solid fa-stopwatch"></i>
+                                <span>省下手動輸入時間：</span>
+                                <strong id="timeSaved">等待辨識</strong>
                             </div>
                         </div>
                     </div>
-
-                    <!-- 轉化引導微文案 -->
+                    <!-- 登入轉換 -->
                     <div class="easter-egg-box" id="conversionBox">
                         <p><i class="fa-solid fa-lightbulb"></i> 體驗滿意嗎？現在免費註冊，這筆辨識結果即可一鍵匯入你的個人帳本！</p>
                         <a href="{{ url_for('auth.login') }}" class="btn-neon-sm" style="display: inline-block; margin-top: 8px;">免費註冊保存帳本</a>
