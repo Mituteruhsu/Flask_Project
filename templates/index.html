@@ -101,9 +101,9 @@
 
             <!-- 步驟一：關卡與上傳模式切換 -->
             <div class="demo-tabs">
-                <button class="tab-btn active" data-target="office"><i class="fa-solid fa-file-invoice-dollar"></i> 預設：上班族報帳</button>
+                <button class="tab-btn active" data-target="upload"><i class="fa-solid fa-cloud-arrow-up"></i> 試玩：上傳自己的發票</button>
+                <button class="tab-btn" data-target="office"><i class="fa-solid fa-file-invoice-dollar"></i> 預設：上班族報帳</button>
                 <button class="tab-btn" data-target="family"><i class="fa-solid fa-cart-shopping"></i> 預設：賣場大採購</button>
-                <button class="tab-btn" data-target="upload"><i class="fa-solid fa-cloud-arrow-up"></i> 試玩：上傳自己的發票</button>
             </div>
 
             <!-- Demo 展示階段 -->
@@ -259,6 +259,6 @@
     </footer>
 
     <!-- 引入互動 JS -->
-    <script src="{{ url_for('static', filename='client/js/landing.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/landing.js') }}"></script>
 </body>
 </html>

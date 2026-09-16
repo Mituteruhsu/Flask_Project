@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
    Demo Tabs
 ====================================================== */
 function initDemoTabs() {
-    const tabs = document.querySelectorAll(".tab-btn");
+    const tabs = document.querySelectorAll(".demo-tabs .tab-btn");
     tabs.forEach(tab => {
         tab.addEventListener("click", () => {
             tabs.forEach(item =>

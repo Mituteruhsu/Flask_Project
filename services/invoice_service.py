@@ -19,7 +19,8 @@ class InvoiceService:
             return {"error": "未提供圖片檔案"}
 
         # 先進行圖片預處理
-        process_image = ImageService.preprocess_image(image_file)
+        # process_image = ImageService.preprocess_image(image_file)
+        process_image = cls._preprocess(image_file)
 
         # 1. 嘗試 QR Code 辨識
         qr_data = QRService.decode_qrcode(process_image)
