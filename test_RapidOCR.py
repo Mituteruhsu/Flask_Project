@@ -51,8 +51,10 @@ print("--- 開始進行 AI 文字辨識 ---")
 # return_word_box=True 非必要，True 時會
 result = engine(img, return_word_box=True)
 
-texts = list(getattr(result, "txts", ()) or ())
-scores = list(getattr(result, "scores", ()) or ())
+# texts = list(getattr(result, "txts", ()) or ())
+# scores = list(getattr(result, "scores", ()) or ())
+# print(f"result.boxes: {result.boxes}")
+# print(f"result.txts: {result.txts}")
 
 # engine(img) 回傳值為 RapidOCROutput 這裡 = result，可透過 result.xxxx 直接存取。
 # result 中預設內容包含
@@ -72,6 +74,7 @@ scores = list(getattr(result, "scores", ()) or ())
 # result.word_results (Tuple[Any])：此部分結果僅在 return_word_box=True 時才會有值。
 # result.elapse_list (List[float])：文字偵測、文字行方向分類與文字辨識等三個部分各自的推論耗時，單位為秒。
 # result.elapse (float)：三個部分整體的耗時，單位為秒。
+print(f"✅ result.boxes: {result.boxes}\n")
 print(f"⏱️ 文字偵測、文字行方向分類與文字辨識三個部分各別的推論耗時: \n文字偵測   :{result.elapse_list[0]:.4f}秒\n文字行方向分類:{result.elapse_list[1]:.4f}秒\n文字辨識   :{result.elapse_list[2]:.4f}秒")
 print(f"⏱️ 辨識整體耗時: {result.elapse:.4f} 秒\n")
 
@@ -122,4 +125,94 @@ print(f"⏱️ 辨識整體耗時: {result.elapse:.4f} 秒\n")
 
 # 內建 Markdown 排列
 print(result.to_markdown())
-print(type(result.to_markdown()))
+# print(type(result.to_markdown()))
+
+# ==========================
+# # 這裡是用文字做標，來排列文字結果
+# def merge_ocr_results_by_line(boxes, txts, y_threshold=20):
+#     """
+#     將 RapidOCR 的座標與文字，根據 Y 軸空間關係判定是否為「同一行」。
+#     """
+#     # 【關鍵修復】：使用 len() 來安全地檢查 NumPy 陣列和串列是否為空
+#     if boxes is None or txts is None or len(boxes) == 0 or len(txts) == 0:
+#         return "", []
+
+#     # 1. 將資料重組，並計算每個框的 Y 軸中心點 (Y_center) 和 左側 X 座標 (X_left)
+#     combined = []
+#     for box, text in zip(boxes, txts):
+#         # box 格式可能為 NumPy array，我們用 list() 或是直接取值來確保安全
+#         # box 格式通常是 [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
+#         y_center = sum([p[1] for p in box]) / 4.0
+#         x_left = min([p[0] for p in box])
+        
+#         # 轉換成標準 list 避免後續序列化問題
+#         clean_box = [[float(pt[0]), float(pt[1])] for pt in box]
+        
+#         combined.append({
+#             "text": text,
+#             "y_center": y_center,
+#             "x_left": x_left,
+#             "box": clean_box
+#         })
+
+#     # 2. 依照 Y 軸從上到下排序
+#     combined.sort(key=lambda x: x["y_center"])
+
+#     lines_dict = []
+#     current_line = []
+
+#     # 3. 走訪所有文字塊進行分行
+#     for item in combined:
+#         if not current_line:
+#             current_line.append(item)
+#         else:
+#             base_y = sum([x["y_center"] for x in current_line]) / len(current_line)
+            
+#             if abs(item["y_center"] - base_y) <= y_threshold:
+#                 current_line.append(item)
+#             else:
+#                 current_line.sort(key=lambda x: x["x_left"])
+#                 lines_dict.append(current_line)
+#                 current_line = [item]
+
+#     if current_line:
+#         current_line.sort(key=lambda x: x["x_left"])
+#         lines_dict.append(current_line)
+
+#     # 4. 產生帶有 \n 換行符號的總文字與 Dict 清單
+#     final_text_lines = []
+#     final_dict_list = []
+
+#     for idx, line in enumerate(lines_dict):
+#         line_text = " ".join([item["text"] for item in line])
+#         final_text_lines.append(line_text)
+        
+#         final_dict_list.append({
+#             "line_number": idx + 1,
+#             "line_text": line_text,
+#             "items": [
+#                 {"text": item["text"], "box": item["box"]} for item in line
+#             ]
+#         })
+
+#     full_text_with_newlines = "\n".join(final_text_lines)
+
+#     return full_text_with_newlines, final_dict_list
+
+# # 假設 result 是您的 RapidOCR 輸出物件
+# ocr_boxes = result.boxes
+# ocr_txts = result.txts
+
+# # 呼叫剛剛寫好的智慧分行工具
+# # 註：好市多這種大圖，文字如果比較小，y_threshold 設定在 20~30 之間效果最好
+# structured_text, structured_dict = merge_ocr_results_by_line(ocr_boxes, ocr_txts, y_threshold=15)
+
+# # 看看換行後的純文字結果
+# print("--- 換行後的還原文字 ---")
+# print(structured_text)
+
+# 看看您要的同一行放在同一個 dict 的效果
+# print("\n--- 同一行的 Dict 結構 ---")
+# import json
+# print(json.dumps(structured_dict[0:5], ensure_ascii=False, indent=2)) # 印出前5行看效果
+# ==========================
