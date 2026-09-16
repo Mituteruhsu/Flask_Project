@@ -54,6 +54,7 @@ init_login_manager(app)
 app.register_blueprint(index_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(demo_bp)
+csrf.exempt(demo_bp)          # ← 新增這行：Demo 端點對外公開，不走 CSRF token 驗證
 # 前端路由 與 API 串接
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(admin_bp)
