@@ -45,6 +45,7 @@ class OCRService:
         ocr_result = ocr_engine(processed_image)
         if ocr_result:
             print(f"✅ AI-OCR 辨識結果:\n {ocr_result.to_markdown()}")
+            return ocr_result.to_markdown()
         else:
             return jsonify({"error": "圖片損壞"})
 

@@ -93,93 +93,93 @@ class QRService:
         # ==========================
         # 將 QR Code 的資料解析成 QRCodeInfo 物件，並轉換成前端可用的字典格式
         # ==========================
-        @staticmethod
-        def reInfo(main_qr):
-            # 台灣發票 QR Code 的固定格式解析
-            x=QRService.recode(main_qr) # 判別0,1,2 是否為utf-8, base64, big5
-            recieve = x[:10]
-            recieve_date = x[10:17]
-            recieve_randam = x[17:21]
-            recieve_sale_Hex = x[21:29]
-            recieve_sale = str(int(recieve_sale_Hex, 16))
-            recieve_total_sale_Hex = x[29:37]
-            recieve_total_sale = str(int(recieve_total_sale_Hex, 16))
-            recieve_buyer_invoice_num = x[37:45]
-            if recieve_buyer_invoice_num == "00000000":
-                recieve_buyer_invoice_num = "一般消費者"
-            recieve_seller_invoice_num = x[45:53]
-            recieve_AESencode = x[53:77]
-            # 第 77碼之後的資料，依照冒號分隔，並將空字串過濾掉
-            after77 = x[77:]
-            z = [i for i in after77.split(':') if i != ""]
-            recieve_free_usage = z[0]
-            recieve_Item = z[1]
-            recieve_totle_Item = z[2]
-            codetype = z[3]
-            if codetype == '0': codetype = 'Big5'
-            elif codetype == '1': codetype = 'UTF-8'
-            elif codetype =='2': codetype = 'Base64'
+    @staticmethod
+    def reInfo(main_qr):
+        # 台灣發票 QR Code 的固定格式解析
+        x=QRService.recode(main_qr) # 判別0,1,2 是否為utf-8, base64, big5
+        recieve = x[:10]
+        recieve_date = x[10:17]
+        recieve_randam = x[17:21]
+        recieve_sale_Hex = x[21:29]
+        recieve_sale = str(int(recieve_sale_Hex, 16))
+        recieve_total_sale_Hex = x[29:37]
+        recieve_total_sale = str(int(recieve_total_sale_Hex, 16))
+        recieve_buyer_invoice_num = x[37:45]
+        if recieve_buyer_invoice_num == "00000000":
+            recieve_buyer_invoice_num = "一般消費者"
+        recieve_seller_invoice_num = x[45:53]
+        recieve_AESencode = x[53:77]
+        # 第 77碼之後的資料，依照冒號分隔，並將空字串過濾掉
+        after77 = x[77:]
+        z = [i for i in after77.split(':') if i != ""]
+        recieve_free_usage = z[0]
+        recieve_Item = z[1]
+        recieve_totle_Item = z[2]
+        codetype = z[3]
+        if codetype == '0': codetype = 'Big5'
+        elif codetype == '1': codetype = 'UTF-8'
+        elif codetype =='2': codetype = 'Base64'
 
-            # print("發票字軌(10位)    : " + self.recieve)
-            # print("發票開立日期 (7位): " + self.recieve_date)
-            # print("隨機碼 (4位)      : " + self.recieve_randam)
-            # print("銷售額 (8位)      : " + self.recieve_sale + " 元")
-            # print("總計額 (8位)      : " + self.recieve_total_sale + " 元")
-            # print("買方統一編號 (8位): " + self.recieve_buyer_invoice_num)
-            # print("賣方統一編號 (8位): " + self.recieve_seller_invoice_num)
-            # print("加密驗證資訊(24位): " + self.recieve_AESencode)
-            # print("營業人使用區(10位): " + self.recieve_free_usage)
-            # print("品目筆數          : " + self.recieve_Item)
-            # print("品目總筆數        : " + self.recieve_totle_Item)
-            # =======span 鎖定品目比數後方資料彙整=======
-            x = (x[(re.search("[0-9]{1}:[0-9]{1}:[0-9]{1}:", x, flags=0).span()[1]):]).split(":") # 正則表達找出與關鍵類似的字元
-            # print(x)
-            # =======split 將資料變成list一一拆解=======
-            # =======將list依照[1, 3, 5]的資料連接=======
-            items=' '.join(x[0:len(x):3])
-            item_quantity=' '.join(x[1:len(x):3])
-            items_price=' '.join(x[2:len(x):3])
-            # print(items, item_quantity, items_price)
-            return QRCodeInfo(
-                recieve,
-                recieve_date,
-                recieve_randam,
-                recieve_sale,
-                recieve_total_sale,
-                recieve_buyer_invoice_num,
-                recieve_seller_invoice_num,
-                recieve_AESencode,
-                after77,
-                recieve_free_usage,
-                recieve_Item,
-                recieve_totle_Item,
-                codetype,
-                items,
-                item_quantity,
-                items_price
-                )
+        # print("發票字軌(10位)    : " + self.recieve)
+        # print("發票開立日期 (7位): " + self.recieve_date)
+        # print("隨機碼 (4位)      : " + self.recieve_randam)
+        # print("銷售額 (8位)      : " + self.recieve_sale + " 元")
+        # print("總計額 (8位)      : " + self.recieve_total_sale + " 元")
+        # print("買方統一編號 (8位): " + self.recieve_buyer_invoice_num)
+        # print("賣方統一編號 (8位): " + self.recieve_seller_invoice_num)
+        # print("加密驗證資訊(24位): " + self.recieve_AESencode)
+        # print("營業人使用區(10位): " + self.recieve_free_usage)
+        # print("品目筆數          : " + self.recieve_Item)
+        # print("品目總筆數        : " + self.recieve_totle_Item)
+        # =======span 鎖定品目比數後方資料彙整=======
+        x = (x[(re.search("[0-9]{1}:[0-9]{1}:[0-9]{1}:", x, flags=0).span()[1]):]).split(":") # 正則表達找出與關鍵類似的字元
+        # print(x)
+        # =======split 將資料變成list一一拆解=======
+        # =======將list依照[1, 3, 5]的資料連接=======
+        items=' '.join(x[0:len(x):3])
+        item_quantity=' '.join(x[1:len(x):3])
+        items_price=' '.join(x[2:len(x):3])
+        # print(items, item_quantity, items_price)
+        return QRCodeInfo(
+            recieve,
+            recieve_date,
+            recieve_randam,
+            recieve_sale,
+            recieve_total_sale,
+            recieve_buyer_invoice_num,
+            recieve_seller_invoice_num,
+            recieve_AESencode,
+            after77,
+            recieve_free_usage,
+            recieve_Item,
+            recieve_totle_Item,
+            codetype,
+            items,
+            item_quantity,
+            items_price
+            )
 
-        # ==========================
-        # QRCodeInfo → API Data
-        # ==========================
-        @staticmethod
-        def to_dict(info: QRCodeInfo):
-            # 將 QRCodeInfo 物件的屬性，轉換成「前端直接可以拿來跑迴圈」的中文欄位字典
-            return {"發票號碼": info.recieve,
-                    "開立日期": info.recieve_date,
-                    "隨機碼": info.recieve_randam,
-                    "銷售額": info.recieve_sale,
-                    "推算總金額": info.recieve_total_sale,
-                    "買方統編": info.recieve_buyer_invoice_num,
-                    "賣方統編": info.recieve_seller_invoice_num,
-                    "AES加密": info.recieve_AESencode,
-                    "77個字元後的資料": info.after77,
-                    "營業人使用區": info.recieve_free_usage,
-                    "品項筆數": info.recieve_Item,
-                    "品項總筆數": info.recieve_totle_Item,
-                    "編碼類型": info.codetype,
-                    "品項明細": info.items,
-                    "品項數量": info.item_quantity,
-                    "品項單價": info.items_price,
-                    "辨識方法": "QR Code",
-                    }
+    # ==========================
+    # QRCodeInfo → API Data
+    # ==========================
+    @staticmethod
+    def to_dict(info: QRCodeInfo):
+        # 將 QRCodeInfo 物件的屬性，轉換成「前端直接可以拿來跑迴圈」的中文欄位字典
+        return {"發票號碼": info.recieve,
+                "開立日期": info.recieve_date,
+                "隨機碼": info.recieve_randam,
+                "銷售額": info.recieve_sale,
+                "推算總金額": info.recieve_total_sale,
+                "買方統編": info.recieve_buyer_invoice_num,
+                "賣方統編": info.recieve_seller_invoice_num,
+                "AES加密": info.recieve_AESencode,
+                "77個字元後的資料": info.after77,
+                "營業人使用區": info.recieve_free_usage,
+                "品項筆數": info.recieve_Item,
+                "品項總筆數": info.recieve_totle_Item,
+                "編碼類型": info.codetype,
+                "品項明細": info.items,
+                "品項數量": info.item_quantity,
+                "品項單價": info.items_price,
+                "辨識方法": "QR Code",
+                }
