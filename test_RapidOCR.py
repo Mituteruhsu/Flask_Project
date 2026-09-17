@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 from rapidocr import RapidOCR
+import re
 
 # 1. 自動取得目前程式所在的路徑，並指定本地端模型路徑
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -74,7 +75,7 @@ result = engine(img, return_word_box=True)
 # result.word_results (Tuple[Any])：此部分結果僅在 return_word_box=True 時才會有值。
 # result.elapse_list (List[float])：文字偵測、文字行方向分類與文字辨識等三個部分各自的推論耗時，單位為秒。
 # result.elapse (float)：三個部分整體的耗時，單位為秒。
-print(f"✅ result.boxes: {result.boxes}\n")
+# print(f"✅ result.boxes: {result.boxes}\n")
 print(f"⏱️ 文字偵測、文字行方向分類與文字辨識三個部分各別的推論耗時: \n文字偵測   :{result.elapse_list[0]:.4f}秒\n文字行方向分類:{result.elapse_list[1]:.4f}秒\n文字辨識   :{result.elapse_list[2]:.4f}秒")
 print(f"⏱️ 辨識整體耗時: {result.elapse:.4f} 秒\n")
 
@@ -123,8 +124,8 @@ print(f"⏱️ 辨識整體耗時: {result.elapse:.4f} 秒\n")
 # else:
 #     print("未開啟 return_word_box 或未偵測到文字")
 
-# 內建 Markdown 排列
-print(result.to_markdown())
+# ===== 內建 Markdown 排列 =====
+# print(result.to_markdown())
 # print(type(result.to_markdown()))
 
 # ==========================
@@ -216,3 +217,128 @@ print(result.to_markdown())
 # import json
 # print(json.dumps(structured_dict[0:5], ensure_ascii=False, indent=2)) # 印出前5行看效果
 # ==========================
+
+# from services.ai_parser_service import AIParserService
+
+# def _parse_ocr(data):
+#     # 1. 取得 ocr_service.py 丟過來的 markdown 字串
+#     markdown_str = data.get("text", "") if isinstance(data, dict) else str(data)
+    
+#     # 2. 利用 markdown 自動換行的特性，切分成逐行的 dict 清單
+#     structured_lines = _parse_markdown_to_lines(markdown_str)
+#     print(f"\n--- 逐行解析結果 (共 {len(structured_lines)} 行) ---")
+#     print(f"逐行解析結果: {structured_lines}")
+    
+#     # 3. 為了讓舊有的正則表達式功能更強大，我們可以把整理乾淨的文字重新組合
+#     clean_text = "\n".join([line["line_text"] for line in structured_lines])
+    
+#     # 4. 進行核心發票資訊的抓取
+#     invoice_number = AIParserService._parse_invoice_number(clean_text)
+#     total_amount = AIParserService._parse_amount(clean_text)
+#     invoice_date = AIParserService._parse_date(clean_text)
+    
+#     # 5. 從我們分好的行 dict 裡面，精準撈出品項明細
+#     items_detail = _extract_items_from_lines(structured_lines)
+
+#     return {
+#         "發票號碼": invoice_number,
+#         "開立日期": invoice_date,
+#         "推算總金額": total_amount,
+#         "逐行解析明細": structured_lines, # 👈 這裡就是您要的，每一行做為一個 dict 的清單
+#         "品項明細": items_detail,
+#         "品項總筆數": len(items_detail),
+#         "OCR文字": clean_text,
+#         "辨識方法": "AI-OCR",
+#     }
+
+# def _parse_markdown_to_lines(markdown_str):
+#     """ 
+#     核心功能：將 markdown 字串依換行符號切開，
+#     把每一行轉換成一個獨立的 dict。
+#     """
+#     lines = markdown_str.split("\n")
+#     structured_lines = []
+#     line_counter = 1
+    
+#     for line in lines:
+#         clean_line = line.strip()
+        
+#         # 濾掉空白行，以及 Markdown 產生的表格分隔線 (例如 |---|---|)
+#         if not clean_line or re.match(r'^[|\s\-:]+$', clean_line):
+#             continue
+            
+#         # 去除 Markdown 的表格前後豎線 `|`，讓文字變乾淨
+#         clean_line = re.sub(r'^\||\|$', '', clean_line).strip()
+#         clean_line = clean_line.replace(" | ", " ") # 把表格中間的間隔轉為空格
+        
+#         # 每一行做為一個 dict
+#         line_dict = {
+#             "line_number": line_counter,
+#             "line_text": clean_line,
+#             "is_price_related": any(k in clean_line for k in ["1x", "2x", "總金額", "合計", "TOTAL", "小計"]),
+#         }
+        
+#         structured_lines.append(line_dict)
+#         line_counter += 1
+        
+#     return structured_lines
+
+# def _extract_items_from_lines(structured_lines):
+#     """
+#     利用已經分好行的 dict 清單，更精準地黏合好市多的「品名」與「價格」
+#     """
+#     items = []
+    
+#     for idx, line_dict in enumerate(structured_lines):
+#         current_text = line_dict["line_text"]
+        
+#         # 檢查這一行是不是價格特徵行
+#         is_price_line = False
+#         price = 0
+        
+#         if "1x" in current_text or "2x" in current_text:
+#             is_price_line = True
+#             nums = re.findall(r'[\d,]+', current_text.replace("1x", "").replace("2x", ""))
+#             if nums:
+#                 price = int(nums[-1].replace(",", "").replace(".", ""))
+#         elif re.search(r'\b\d+\b.*\b\d+\b.*T?', current_text):
+#             nums = re.findall(r'[\d,]+', current_text)
+#             if len(nums) >= 2:
+#                 is_price_line = True
+#                 price = int(nums[-1].replace(",", "").replace(".", ""))
+
+#         # 如果這行是價格，往上找最鄰近的「純文字行」當作商品品名
+#         if is_price_line:
+#             item_name = "未知商品"
+#             for look_back in range(1, 3):
+#                 prev_idx = idx - look_back
+#                 if prev_idx >= 0:
+#                     prev_text = structured_lines[prev_idx]["line_text"]
+#                     # 如果上一行不全是數字，且不是發票頭尾的系統關鍵字
+#                     if not prev_text.replace(" ", "").isdigit() and len(prev_text) > 2:
+#                         if not any(k in prev_text for k in ["COSTCO", "SALE", "店", "會員"]):
+#                             item_name = prev_text
+#                             break
+                            
+#             if price < 100000: # 防禦卡號干擾
+#                 items.append({
+#                     "品名": item_name,
+#                     "數量": 1,
+#                     "單價": price,
+#                     "小計": price
+#                 })
+                
+#     return items
+
+# print(f"原始 OCR 結果: \n{result.to_markdown()}")
+# # ai_result = _parse_ocr(result.to_markdown())  # 這裡直接把 RapidOCR 的結果轉成 dict 丟進去解析
+# print("\n=== AI-OCR 解析結果 ===")
+# print(f"解析結果: {ai_result}")
+
+# ===================================================
+from test_parser import TAIParserService
+print(f"原始 boxes: \n{result.boxes} \n 原始 txts: \n{result.txts}")
+final_report = TAIParserService.parse_from_raw_ocr(result.boxes, result.txts)
+print(f"原始 OCR 結果: \n{result.to_markdown()}")
+print("\n=== AI-OCR 解析結果 ===")
+print(f"解析結果: {final_report}")
