@@ -1,6 +1,5 @@
 from flashtext import KeywordProcessor
 
-# 1. 準備您剛才提供的 RapidOCR 原始混亂字串
 ocr_result_str = """
 COSTCO
 VVHOLESAVLE
@@ -46,41 +45,23 @@ KS抽取式衛生纸
 """
 
 # ==========================================
-# 任務一：使用 FlashText 進行「單據類型特徵識別」
-# ==========================================
-type_processor = KeywordProcessor()
-
-# 設定特徵字典：當看到哪些字，就歸類為哪種單據特徵
-type_processor.add_keyword("1x", "ITEMIZED_INVOICE")
-type_processor.add_keyword("商品數小計", "ITEMIZED_INVOICE")
-type_processor.add_keyword("交易授權碼", "CARD_SLIP")
-type_processor.add_keyword("簽名", "CARD_SLIP")
-
-# 一微秒提取特徵
-detected_types = type_processor.extract_keywords(ocr_result_str)
-print("=== 1. 單據特徵識別結果 ===")
-print(f"偵測到的單據特徵標籤: {set(detected_types)}")
-if "ITEMIZED_INVOICE" in detected_types:
-    print("-> 路由分流決策：此單據包含商品細項，準備啟動『發票細項解析器』\n")
-
-
-# ==========================================
 # 任務二：使用 FlashText 進行「OCR 錯字自動修正」
 # ==========================================
+# 【關鍵關鍵！】初始化時加上其餘的字元集，讓它與繁簡中文、標點符號全面相容
 clean_processor = KeywordProcessor()
+clean_processor.non_word_boundaries = set() # 清空預設邊界，強迫所有文字與符號都獨立計算
 
-# 設定校正字典：add_keyword(標準答案, 錯字或變體)
-# 這部分非常適合直接從您的資料庫 (Database) 動態讀取載入！
-clean_processor.add_keyword("Wholesale", "VVHOLESAVLE")
-clean_processor.add_keyword("新莊店", "新社店")
-clean_processor.add_keyword("找零", "找霉")
-clean_processor.add_keyword("產銷履歷", "産銷履歷")
-clean_processor.add_keyword("產銷履歷", "產销腹歷")
+# 設定校正字典
+clean_processor.add_keyword("VVHOLESAVLE", "Wholesale") # 這裡對調，(原始錯字, 要替換成的標準字)
+clean_processor.add_keyword("新社店", "新莊店")
+clean_processor.add_keyword("找霉", "找零")
+clean_processor.add_keyword("産銷履歷", "產銷履歷")
+clean_processor.add_keyword("產销腹歷", "產銷履歷")
 
-# 一微秒完成整篇文字的局部錯字替換
+# 完成整篇文字的局部錯字替換
 cleaned_str = clean_processor.replace_keywords(ocr_result_str)
 
 print("=== 2. 錯字自動修正結果 ===")
-# 為了方便對比，我們印出前 15 行清洗後的結果
+# 印出前 15 行清洗後的結果
 for i, line in enumerate(cleaned_str.strip().split("\n")[:15]):
     print(f"第 {i+1:02d} 行: {line}")
