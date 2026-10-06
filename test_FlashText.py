@@ -53,17 +53,21 @@ KS抽取式衛生纸
 clean_processor = KeywordProcessor()
 clean_processor.non_word_boundaries = set() # 清空預設邊界，強迫所有文字與符號都獨立計算
 
-# 設定校正字典
-clean_processor.add_keyword("VVHOLESAVLE", "Wholesale") # 這裡對調，(原始錯字, 要替換成的標準字)
-clean_processor.add_keyword("新社店", "新莊店")
-clean_processor.add_keyword("找霉", "找零")
-clean_processor.add_keyword("産銷履歷", "產銷履歷")
-clean_processor.add_keyword("產销腹歷", "產銷履歷")
+# 查 DB 需要 Flask app context
+with app.app_context():
+    rows = correction_dictionary_service.filter_by(is_active=True, is_deleted=False)
+
+    # 在 context 內就把需要的欄位取出來，避免 session 結束後存取 ORM 物件
+    for row in rows:
+        clean_processor.add_keyword(row.alias, row.canonical_name)   # (原始錯字, 標準字)
+
+print(f"✅ 已從資料庫載入 {len(rows)} 筆修正字典")
+if not rows:
+    print("⚠️ 字典是空的，請確認 seed_correction_dictionaries() 是否已執行")
 
 # 完成整篇文字的局部錯字替換
 cleaned_str = clean_processor.replace_keywords(ocr_result_str)
 
-print("=== 2. 錯字自動修正結果 ===")
-# 印出前 15 行清洗後的結果
-for i, line in enumerate(cleaned_str.strip().split("\n")[:15]):
+print("=== 錯字自動修正結果 ===")
+for i, line in enumerate(cleaned_str.strip().split("\n")):
     print(f"第 {i+1:02d} 行: {line}")

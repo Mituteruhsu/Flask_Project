@@ -106,9 +106,6 @@ class InvoiceService(BaseService):
 class CorrectionDictionaryService(BaseService):
     def __init__(self):
         super().__init__(CorrectionDictionary)
-        self.keyword_processor = KeywordProcessor(case_sensitive=False)
-        self._is_initialized = False
-
 
 # ============================
 # 初始化 CRUD.Service 實例
