@@ -5,6 +5,7 @@ from services.image_service import ImageService
 from services.qr_service import QRService
 from services.ocr_service import OCRService
 from services.ai_parser_service import AIParserService
+from services.correction_service import CorrectionService
 
 class InvoiceService:
     @classmethod
@@ -39,6 +40,7 @@ class InvoiceService:
                 "細分類": "UNKNOWN",
                 "訊息": "無法辨識圖片",
                 }
+            ocr_data = CorrectionService.correct_text(ocr_data)
             result = AIParserService.parse(ocr_data)
             result["成功"] = True
             return result
