@@ -7,6 +7,7 @@ from database.models.RBAC.capability import Capability
 from database.models.family.family_member import FamilyMember, FamilyRole
 from database.models.family.family import Family
 from database.models.invoice import InvoiceRecord
+from database.models.correctiondictionary import CorrectionDictionary
 from core.database import db
 from datetime import datetime
 
@@ -101,6 +102,10 @@ class InvoiceService(BaseService):
         db.session.commit()
         return True
 
+class CorrectionDictionaryService(BaseService):
+    def __init__(self):
+        super().__init__(CorrectionDictionary)
+
 
 # ============================
 # 初始化 CRUD.Service 實例
@@ -113,3 +118,4 @@ family_member_service = FamilyMemberService()
 family_role_service = FamilyRoleService()
 family_service = FamilyService()
 invoice_service = InvoiceService()
+correction_dictionary_service = CorrectionDictionaryService()
