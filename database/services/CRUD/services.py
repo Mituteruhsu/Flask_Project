@@ -10,6 +10,7 @@ from database.models.invoice import InvoiceRecord
 from database.models.correctiondictionary import CorrectionDictionary
 from core.database import db
 from datetime import datetime
+from flashtext import KeywordProcessor
 
 # User 專用 Service，直接繼承所有 CRUD 功能
 class UserService(BaseService):
@@ -105,6 +106,8 @@ class InvoiceService(BaseService):
 class CorrectionDictionaryService(BaseService):
     def __init__(self):
         super().__init__(CorrectionDictionary)
+        self.keyword_processor = KeywordProcessor(case_sensitive=False)
+        self._is_initialized = False
 
 
 # ============================

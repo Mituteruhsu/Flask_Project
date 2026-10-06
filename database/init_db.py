@@ -12,7 +12,6 @@ class DBService:
         db.init_app(app)
         with app.app_context():
             DatabaseSync.sync_datatable()
-            DatabaseSeeder.seed_admin_user()
             # 順序很重要：Capability / Permission 是基礎資料，
             # Role 依賴 Permission、Plan 依賴 Capability，所以要先建立被依賴的那一方
             DatabaseSeeder.seed_capabilities()
@@ -20,6 +19,9 @@ class DBService:
             DatabaseSeeder.seed_roles()
             DatabaseSeeder.seed_plans()
             DatabaseSeeder.seed_admin_user()
+
+            # 獨立資料表，無相依順序問題（FlashText 修正字典）
+            DatabaseSeeder.seed_correction_dictionaries()
 
             # 加入其他初始化流程，也都放在這裡: 以下範例
             # DatabaseSeeder.seed_roles()

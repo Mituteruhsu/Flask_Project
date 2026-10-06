@@ -5,6 +5,7 @@ from database.models.RBAC.role import Role
 from database.models.RBAC.permission import Permission
 from database.models.RBAC.capability import Capability
 from database.models.subscription.plan import Plan
+from database.models.correctiondictionary import CorrectionDictionary
 
 
 # =======================
@@ -180,6 +181,68 @@ class DatabaseSeeder:
         except Exception as e:
             db.session.rollback()
             print(f"❌ 建立預設 Plan 失敗: {e}")
+
+    @staticmethod
+    def seed_correction_dictionaries():
+        """
+        OCR 修正字典 (CorrectionDictionary) 預設資料，供 FlashText 做錯字替換。
+        alias = OCR 常見的錯字/變體，canonical_name = 標準寫法。
+        category: merchant(商家) / item(品項) / general(通用)
+
+        只有在整張表完全沒有資料時才初始化。
+        count 會包含軟刪除的資料，所以管理者刪掉的預設項目不會在重啟後又被加回來。
+        """
+        print("檢查 correction_dictionaries 資料表，若無資料則建立預設修正字典")
+        try:
+            total = db.session.scalar(
+                db.select(db.func.count()).select_from(CorrectionDictionary)
+            )
+            if total and total > 0:
+                print("✅ correction_dictionaries 已有資料，略過初始化")
+                return
+
+            # (alias, canonical_name, category)，alias 有 unique 限制，不可重複
+            defaults = [
+                # --- 商家與地址雙重屬性 ---
+                ("新社店", "新莊店", ["merchant", "address"]),
+                ("建國--路", "建國一路", ["address"]),
+                ("VVHOLESAVLE", "WHOLESALE", ["merchant"]),
+
+                # --- 純品項 ---
+                ("迷你葡萄乾糍饼", "迷你葡萄乾鬆餅", ["item"]),
+                ("羲美厚豆奶", "義美厚豆奶", ["item"]),
+                ("美國球鞋甘蓝", "美國抱子甘藍", ["item"]),
+                ("萬品素蛋饼皮", "萬品素蛋餅皮", ["item"]),
+                ("美國特嫩肩牛排", "美國特選嫩肩牛排", ["item"]),
+                ("產销腹歷青花菜", "產銷履歷青花菜", ["item"]),
+                ("简蒿菜", "茼蒿菜", ["item"]),
+                ("116624有機A菜500G1x", "有機A菜500G", ["item"]),
+                ("産銷履歷彩色甜椒", "產銷履歷彩色甜椒", ["item"]),
+                ("KS抽取式衛生纸", "KS抽取式衛生紙", ["item"]),
+
+                # --- 通用（收據欄位/用語）---
+                ("金星鲁員", "金星會員", ["general"]),
+                ("（T=含税）", "(T=含稅)", ["general"]),
+                ("總金额", "總金額", ["general"]),
+                ("红利抵用", "紅利抵用", ["general"]),
+                ("找霉", "找零", ["general"]),
+                ("卡献具", "卡載具", ["general"]),
+            ]
+            
+            db.session.add_all(
+                CorrectionDictionary(
+                    alias=alias,
+                    canonical_name=canonical,
+                    category=category,
+                    is_active=True,
+                )
+                for alias, canonical, category in defaults
+            )
+            db.session.commit()
+            print(f"🎉 預設 CorrectionDictionary 建立完成！(共 {len(defaults)} 筆)")
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ 建立預設 CorrectionDictionary 失敗: {e}")
 
     def seed_invoice_categories():
         pass  # 之後加入 invoice_categories 資料表的預設資料
