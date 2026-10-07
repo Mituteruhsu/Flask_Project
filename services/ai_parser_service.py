@@ -62,7 +62,9 @@ class AIParserService:
             r"隨機碼",
         ]
 
-        return any(re.search(p, text, re.I) for p in patterns)
+        result = any(re.search(p, text, re.I) for p in patterns)
+        print(f"=== 判斷發票 ===\n發票號碼: {result}\n")
+        return result
 
     @staticmethod
     def _is_receipt_text(text):
@@ -72,8 +74,9 @@ class AIParserService:
             r"小計",
             r"合計",
         ]
-
-        return any(re.search(p, text, re.I) for p in patterns)
+        result = any(re.search(p, text, re.I) for p in patterns)
+        print(f"=== 判斷收據 ===\n收據: {result}\n")
+        return result
 
     # ======================================================
     # 第二層：統一資料解析
@@ -94,6 +97,7 @@ class AIParserService:
 
         if isinstance(data, str):
             data = {"辨識方法": "AI-OCR", "text": data}
+            print("傳入的資料為字串，已自動包裝成 dict")
 
         document_type = cls.classify_document(data)
 

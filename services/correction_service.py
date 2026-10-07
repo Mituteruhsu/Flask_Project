@@ -25,4 +25,7 @@ class CorrectionService:
         """
         keyword_processor = cls.initialize_keyword_processor()
         corrected_text = keyword_processor.replace_keywords(text)
+        print("=== 錯字自動修正完成 ===")
+        # for i, line in enumerate(corrected_text.strip().split("\n")):
+        #     print(f"第 {i+1:02d} 行: {line}")
         return corrected_text
