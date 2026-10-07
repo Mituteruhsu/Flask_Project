@@ -223,7 +223,13 @@ function renderDemoResult(data) {
 
     }
 
-
+    setText(
+        "documentType",
+        data["文件類型"] ||
+        data["documentType"] ||
+        "UNKNOWN"
+    );
+    
     setText(
         "invoiceNumber",
         data["發票號碼"]

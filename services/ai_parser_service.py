@@ -13,70 +13,116 @@ class AIParserService:
     """
 
     # ======================================================
-    # 第一層：文件分類
+    # 第一層：文件分類（特徵加權）
     # ======================================================
+    DOCUMENT_TYPES = {
+        "invoice": "發票",
+        "receipt": "收據",
+        "detail": "明細",
+        "triplicate": "三聯單",
+        "credit_card": "信用卡刷卡收據",
+        "payment": "付款/繳費單",
+        "order": "訂單",
+        "unknown": "未知文件",
+    }
+
+    # 每種文件: [(正則, 權重), ...]，同一特徵只計一次分
+    DOCUMENT_RULES = {
+        "invoice": [
+            (r"[A-Z]{2}[- ]?\d{8}", 8),      # 發票號碼
+            (r"統一發票", 6),
+            (r"銷售額", 3),
+            (r"隨機碼|<GUI>", 4),             # 補充：電子發票特有
+        ],
+        "receipt": [
+            (r"收據", 6),
+            (r"receipt", 5),
+            (r"合計", 2),
+        ],
+        "credit_card": [
+            (r"授權碼", 8),
+            (r"卡號", 7),
+            (r"刷卡", 6),
+            (r"visa|master\s?card|mastercard", 4),
+        ],
+        "detail": [
+            (r"品項|品名", 3),
+            (r"數量", 3),
+            (r"單價", 3),
+            (r"小計", 2),
+            (r"商品數小計", 12),
+        ],
+        "triplicate": [
+            (r"三聯式", 10),
+            (r"三聯單", 10),
+            (r"買受人", 3),
+            (r"統一編號", 3),
+        ],
+        # 以下兩組使用者未提供，是我補的起手值，請依實際單據調整
+        "payment": [
+            (r"繳費|繳款", 6),
+            (r"應繳", 5),
+            (r"銷帳編號|虛擬帳號", 6),
+            (r"繳費期限|截止日", 3),
+        ],
+        "order": [
+            (r"訂單", 6),
+            (r"訂購|訂貨", 4),
+            (r"出貨|配送|收件", 3),
+        ],
+    }
+
+    QR_INVOICE_SCORE = 10     # 台灣發票 QR
+    MIN_SCORE = 6             # 最高分低於此值 → unknown
+    # 同分時的優先順序（越前面越優先）
+    TIE_PRIORITY = ["invoice", "credit_card", "triplicate", "payment",
+                    "order", "receipt", "detail"]
+
+    @staticmethod
+    def _extract_text(data):
+        """ 把 str / dict 統一轉成可比對的純文字 """
+        if isinstance(data, str):
+            print("傳入的資料為字串，已自動包裝成 dict")
+            return data
+        if isinstance(data, dict):
+            print("傳入的資料為 dict，已自動轉換成純文字")
+            return " ".join(str(v) for v in data.values() if v)
+        return str(data)
+
+    @classmethod
+    def _score_document(cls, data):
+        """ 回傳 {文件類型: 分數}，方便除錯與調整權重 """
+        text = cls._extract_text(data)
+        scores = {
+            doc_type: sum(
+                weight for pattern, weight in rules
+                if re.search(pattern, text, re.I)
+            )
+            for doc_type, rules in cls.DOCUMENT_RULES.items()
+        }
+        # 台灣發票 QR：結構化來源，直接加分
+        if isinstance(data, dict) and data.get("辨識方法") == "QR Code":
+            scores["invoice"] += cls.QR_INVOICE_SCORE
+        return scores
 
     @classmethod
     def classify_document(cls, data):
-        """
-        第一層分類。
-
-        QR 已符合台灣電子發票格式：
-            invoice
-
-        OCR：
-            依文字判斷 invoice / receipt / unknown
-        """
-
+        """ 只負責計分與決策，回傳 DOCUMENT_TYPES 的 key """
         if not data:
             return "unknown"
 
-        if isinstance(data, str):
-            if cls._is_invoice_text(data):
-                return "invoice"
-            if cls._is_receipt_text(data):
-                return "receipt"
+        scores = cls._score_document(data)
+        print(f"執行 _score_document，計分結果: {scores}")
+        best_score = max(scores.values())
+        print(f"最高分: {best_score}")
+        if best_score < cls.MIN_SCORE:
             return "unknown"
 
-        method = data.get("辨識方法")
-
-        if method == "QR Code":
-            return "invoice"
-
-        text = data.get("text", "") if isinstance(data, dict) else str(data)
-
-        if cls._is_invoice_text(text):
-            return "invoice"
-
-        if cls._is_receipt_text(text):
-            return "receipt"
-
-        return "unknown"
-
-    @staticmethod
-    def _is_invoice_text(text):
-        patterns = [
-            r"[A-Z]{2}[- ]?\d{8}",
-            r"發票",
-            r"統一發票",
-            r"隨機碼",
-        ]
-
-        result = any(re.search(p, text, re.I) for p in patterns)
-        print(f"=== 判斷發票 ===\n發票號碼: {result}\n")
-        return result
-
-    @staticmethod
-    def _is_receipt_text(text):
-        patterns = [
-            r"收據",
-            r"receipt",
-            r"小計",
-            r"合計",
-        ]
-        result = any(re.search(p, text, re.I) for p in patterns)
-        print(f"=== 判斷收據 ===\n收據: {result}\n")
-        return result
+        # 取最高分；同分依 TIE_PRIORITY 決定
+        candidates = [t for t, s in scores.items() if s == best_score]
+        candidates.sort(key=cls.TIE_PRIORITY.index)
+        print(f"同分候選: {candidates}，依優先順序排序後: {candidates}")
+        return candidates[0]
 
     # ======================================================
     # 第二層：統一資料解析
@@ -107,7 +153,7 @@ class AIParserService:
         else:
             result = cls._parse_ocr(data)
 
-        result["文件類型"] = document_type
+        result["文件類型"] = cls.DOCUMENT_TYPES[document_type]
 
         # ==================================================
         # 第三層：細分類
