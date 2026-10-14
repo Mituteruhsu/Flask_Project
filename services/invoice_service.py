@@ -26,7 +26,9 @@ class InvoiceService:
         # 1. 嘗試 QR Code 辨識
         qr_data = QRService.decode_qrcode(process_image)
         if qr_data:
-            return AIParserService.parse(qr_data)
+            result = AIParserService.parse(qr_data)
+            result["成功"] = True
+            return result
 
         # 2. 若失敗，啟動 AI-OCR 辨識
         if not qr_data:

@@ -1,3 +1,4 @@
+# services/qr_service.py
 import re
 from pyzbar.pyzbar import decode
 from models.data_models.qr_model import QRCodeInfo
