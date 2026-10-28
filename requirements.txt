@@ -7,4 +7,4 @@ opencv_python==4.13.0.92
 pyzbar==0.1.9
 rapidocr==3.9.0
 SQLAlchemy==2.0.51
-Werkzeug==3.1.8
+Werkzeug==3.1.9
